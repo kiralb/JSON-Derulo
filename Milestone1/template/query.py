@@ -27,8 +27,13 @@ class Query:
 
     def insert(self, *columns):
         schema_encoding = '0' * self.table.num_columns
+
         self.rowCounter = self.rowCounter + 1
-        self.table.tableDict[self.rowCounter] = columns
+        arrayToAdd = []
+        for element in range(5):
+            arrayToAdd.append(columns[element])
+        self.table.tableDict[self.rowCounter] = arrayToAdd
+
 
         pass
 
