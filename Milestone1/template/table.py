@@ -12,7 +12,7 @@ class Record:
     def __init__(self, rid, key, columns):
         self.rid = rid
         self.key = key
-        self.columns = columns
+        self.columns = columns #number of pages spanned/ number of attributes
 
 class Table:
 
@@ -26,8 +26,9 @@ class Table:
         self.key = key
         self.num_columns = num_columns
         self.page_directory = {}
+        self.tableDict = {}
         pass
 
     def __merge(self):
+        #for milestone 2
         pass
- 
