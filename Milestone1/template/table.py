@@ -6,6 +6,11 @@ RID_COLUMN = 1
 TIMESTAMP_COLUMN = 2
 SCHEMA_ENCODING_COLUMN = 3
 
+class Node:
+    def __init__(self): #object initializer to set attributes (fields)
+        self.val = 0
+        self.forwardptr = None
+        self.backwardptr = None
 
 class Record:
 
@@ -14,6 +19,12 @@ class Record:
         self.key = key
         self.columns = columns #number of pages spanned/ number of attributes
 
+        # node = Node()
+        # node.forwardptr = Node()
+        # if node.forwardptr == None:
+        #     print("The forwardptr node is None/Null.")
+
+
 class Table:
 
     """
@@ -21,17 +32,17 @@ class Table:
     :param num_columns: int     #Number of Columns: all columns are integer
     :param key: int             #Index of table key in columns
     """
-    
+
     # This class uses page.py to store and retrieve records
     def __init__(self, name, num_columns, key):
         self.name = name
         self.key = key
         self.num_columns = num_columns + 4
         self.page_directory = {}
-        
+
         # implementation start
         self.tableDict = {} # try parsing the data into dict format (row num:row)
-        
+
         self.basePages = []
         self.tailPages = []
 		# basePage.append(PageObj)
@@ -47,16 +58,18 @@ class Table:
 				### if tail record:
 				###		- if 1st tail record, back pointer to base record's RID
 				### 	- for all following tail records, set backward pointer to previous tail record's RID
-				
+
         for i in range(num_columns):
             physicaPageToAddToBasePage = Page()
             physicalPageToAddToTailPage = Page()
-            
+
             self.basePages.append(physicalPageToAddToBasePage)
             self.tailPages.append(physicalPageToAddToTailPage)
 
-        
-		
+            #basePages[0] => indirection column
+
+
+
         pass
 
     def __merge(self):
