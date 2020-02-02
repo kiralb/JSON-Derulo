@@ -48,7 +48,7 @@ class Table:
         
         # initialize base and tail pages where the number of physical pages is equal to the number of columns
         for i in range(num_columns):
-            physicaPageToAddToBasePage = Page()
+            physicalPageToAddToBasePage = Page()
             physicalPageToAddToTailPage = Page()
 
             self.basePages.append(physicalPageToAddToBasePage)

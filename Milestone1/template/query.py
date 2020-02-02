@@ -27,6 +27,12 @@ class Query:
 
     def insert(self, *columns):
         schema_encoding = '0' * self.table.num_columns
+        id = columns[0]
+        self.table.basePages[0].data[0] = 5
+#        q1 = columns[1]
+#        q2 = columns[2]
+#        q3 = columns[3]
+#        q4 = columns[4]
         pass
 
     """
