@@ -18,6 +18,8 @@ class Record:
         self.rid = rid
         self.key = key
         self.columns = columns #number of pages spanned/ number of attributes
+        
+        ## create a base record and tail record objects b/c they are going to have different implementations of their indirection columns
 
         # node = Node()
         # node.forwardptr = Node()
@@ -39,14 +41,20 @@ class Table:
         self.key = key
         self.num_columns = num_columns + 4
         self.page_directory = {}
+<<<<<<< HEAD
 
         # implementation start
         self.tableDict = {} # try parsing the data into dict format (row num:row)
 
+=======
+    
+        
+>>>>>>> 5efffc51d9ff90c4d894290775d53d457c672e28
         self.basePages = []
         self.tailPages = []
-		# basePage.append(PageObj)
+        # basePage.append(PageObj)
 
+<<<<<<< HEAD
 		# initialize base and tail pages where the number of physical pages is equal to the number of columns
 		# things to consider, if RID is unique or not
 			# if RID is unique then add to base page
@@ -59,17 +67,37 @@ class Table:
 				###		- if 1st tail record, back pointer to base record's RID
 				### 	- for all following tail records, set backward pointer to previous tail record's RID
 
+=======
+        # initialize base and tail pages where the number of physical pages is equal to the number of columns
+>>>>>>> 5efffc51d9ff90c4d894290775d53d457c672e28
         for i in range(num_columns):
             physicaPageToAddToBasePage = Page()
             physicalPageToAddToTailPage = Page()
 
             self.basePages.append(physicalPageToAddToBasePage)
             self.tailPages.append(physicalPageToAddToTailPage)
+<<<<<<< HEAD
 
             #basePages[0] => indirection column
 
 
 
+=======
+            
+        ### TO DO: METACOLUMNS ###
+            ### TO DO FOR INDIRECTION COLUMN: ###
+            ### if base record:
+            ###        - initialize forward indirection column pointer to null
+            ###        - with each appended tail record, change forward indirection pointer to latest tail record's RID
+            ### if tail record:
+            ###        - if 1st tail record, back pointer to base record's RID
+            ###     - for all following tail records, set backward pointer to previous tail record's RID
+            
+            ### TO DO FOR SCHEMA ENCODING: ###
+            ### if base record:
+            ###     -
+        
+>>>>>>> 5efffc51d9ff90c4d894290775d53d457c672e28
         pass
 
     def __merge(self):
