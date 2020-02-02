@@ -45,7 +45,8 @@ class Table:
         # implementation start
         self.basePages = []
         self.tailPages = []
-
+        
+        # initialize base and tail pages where the number of physical pages is equal to the number of columns
         for i in range(num_columns):
             physicaPageToAddToBasePage = Page()
             physicalPageToAddToTailPage = Page()
@@ -56,16 +57,21 @@ class Table:
         ### TO DO: METACOLUMNS ###
             ### TO DO FOR INDIRECTION COLUMN: ###
             ### if base record:
-            ###        - initialize forward indirection column pointer to null
-            ###        - with each appended tail record, change forward indirection pointer to latest tail record's RID
+            ###     - initialize forward indirection column pointer to null
+            ###     - with each appended tail record, change forward indirection pointer to latest tail record's RID
             ### if tail record:
-            ###        - if 1st tail record, back pointer to base record's RID
+            ###     - if 1st tail record, back pointer to base record's RID
             ###     - for all following tail records, set backward pointer to previous tail record's RID
-
+            
             ### TO DO FOR SCHEMA ENCODING: ###
             ### if base record:
-            ###     -
-
+            ###     - if column has been updated, set respective bit in bitmap representation to 1
+            ###     - otherwise, set bit to 0
+            ### if tail record:
+            ###     - if column
+            ###
+            ###
+        
         pass
 
     def __merge(self):
