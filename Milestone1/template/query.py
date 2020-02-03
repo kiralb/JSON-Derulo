@@ -20,19 +20,33 @@ class Query:
 
     def delete(self, key):
         pass
-
+	
+	# attribute = 9066596710
+	# i = 0
+    def addToBasePages(self, attribute, i):
+		# add to basePage[5 + i]
+        print("accessing physical page: ", 4 + i)
+        physicalPage = self.table.basePages[4 + i]
+        if (len(str(attribute)) < 3):
+			physicalPage.offset = 3
+		else:
+			physicalPage.offset = len(str(attribute))
+        
+		
+	
     """
     # Insert a record with specified columns
     """
 
     def insert(self, *columns):
         schema_encoding = '0' * self.table.num_columns
-        id = columns[0]
-        self.table.basePages[0].data[0] = 5
-#        q1 = columns[1]
-#        q2 = columns[2]
-#        q3 = columns[3]
-#        q4 = columns[4]
+        for i in range(len(columns)):
+           # add first parameter to bp5
+           # add second parameter to bp 6
+           # add third parameter to bp 7 ...
+           attribute = columns[i]
+           self.addToBasePages(attribute, i)
+        
         pass
 
     """

@@ -11,7 +11,7 @@ keys = []
 
 # Measuring Insert Performance
 insert_time_0 = process_time()
-for i in range(0, 10000):
+for i in range(0, 1):
     query.insert(906659671 + i, 93, 0, 0, 0)
     keys.append(906659671 + i)
 insert_time_1 = process_time()
