@@ -1,5 +1,6 @@
 from template.table import Table, Record
 from template.index import Index
+from template.page import *
 import sys
 
 
@@ -11,7 +12,7 @@ class Query:
     #rowCounter = 0
     def __init__(self, table):
         self.table = table
-        self.rowCounter = 0
+        self.basePageRows = 0
         pass
 
     """
@@ -22,29 +23,51 @@ class Query:
     def delete(self, key):
         pass
     
-    def addToByteArray(self, physicalPage, attribute):
+    def addToByteArray(self, physicalPage, attribute, column):
+        pass
         #Need to confir this adds to the bite array
         byteArray = physicalPage.data 
         attribute = str(attribute)
+
+
+
+        currentIndex = physicalPage.num_records *physicalPage.offset
+        print("len(attribute) + currentIndex: ", len(attribute) + currentIndex, "\n")
+
+        if( len(attribute) + currentIndex > 4096 ):
+            print("Overflow, Exiting Function")
+            self.basePageRows = self.basePageRows + 1
+            self.table.addNewSetOfPhysicalBasePages()
+            # start adding to this new set of physical base pages
+
+            physicalPage = self.table.basePages[self.basePageRows][column]
+            if(len(str(attribute)) < 3):
+                physicalPage.offset = 3
+            else:
+                physicalPage.offset = len(str(attribute))
+            byteArray = physicalPage.data 
+
 
         i = physicalPage.offset * physicalPage.num_records
         j = 0
         while(j < len(attribute)):
             byteArray[i] = int(attribute[j])
-            byteArray[i] = int(attribute[j])
+            #byteArray[i] = int(attribute[j])
+            
             i = i + 1
             j = j + 1
         #print(byteArray)
         physicalPage.num_records += 1
     
     
-    def addToBasePages(self, attribute, i):
-        physicalPage = self.table.basePages[4 + i]
+    def addToBasePages(self, attribute, column):
+        pass
+        physicalPage = self.table.basePages[self.basePageRows][column]
         if(len(str(attribute)) < 3):
             physicalPage.offset = 3
         else:
             physicalPage.offset = len(str(attribute))
-        self.addToByteArray(physicalPage, attribute)
+        self.addToByteArray(physicalPage, attribute, column)
 
 
         
@@ -54,6 +77,7 @@ class Query:
     """
 
     def insert(self, *columns):
+        pass
         schema_encoding = '0' * self.table.num_columns
         for i in range(len(columns)):
            # add first parameter to bp5

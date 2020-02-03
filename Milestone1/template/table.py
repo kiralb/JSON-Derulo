@@ -39,12 +39,14 @@ class Table:
     def __init__(self, name, num_columns, key):
         self.name = name
         self.key = key
-        self.num_columns = num_columns + 4
+        self.num_columns = num_columns + 2
         self.page_directory = {}
 
         # implementation start
         self.basePages = []
         self.tailPages = []
+        self.setOfBasePhysicalPagesToAdd = []
+        self.setOfTailPhysicalPagesToAdd = []
         
         # initialize base and tail pages where the number of physical pages is equal to the number of columns
         numberOfColumns = self.num_columns
@@ -52,8 +54,12 @@ class Table:
             physicalPageToAddToBasePage = Page()
             physicalPageToAddToTailPage = Page()
 
-            self.basePages.append(physicalPageToAddToBasePage)
-            self.tailPages.append(physicalPageToAddToTailPage)
+            self.setOfBasePhysicalPagesToAdd.append(physicalPageToAddToBasePage)
+            self.setOfTailPhysicalPagesToAdd.append(physicalPageToAddToTailPage)
+        self.basePages.append(self.setOfBasePhysicalPagesToAdd)
+        self.tailPages.append(self.setOfTailPhysicalPagesToAdd)
+        print("rows in 2d array: ", len(self.basePages))
+        print("columns in 2d array: ", len(self.basePages[0]))
 
         ### TO DO: METACOLUMNS ###
             ### TO DO FOR INDIRECTION COLUMN: ###
@@ -74,6 +80,14 @@ class Table:
             ###
         
         pass
+
+    def addNewSetOfPhysicalBasePages(self):
+        self.newSetOfBasePhysicalPagesToAdd = []
+        for i in range(self.num_columns):
+            self.physicalPageToAddToBasePage = Page()
+            self.newSetOfBasePhysicalPagesToAdd.append(self.physicalPageToAddToBasePage) 
+        self.basePages.append(self.newSetOfBasePhysicalPagesToAdd)
+
 
     def __merge(self):
         #for milestone 2

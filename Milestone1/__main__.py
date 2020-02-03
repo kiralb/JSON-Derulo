@@ -12,9 +12,12 @@ keys = []
 
 # Measuring Insert Performance
 insert_time_0 = process_time()
-for i in range(0, 450):
+for i in range(0, 475):
     query.insert(123456789 + i, 93, 11, 12, 13)
     keys.append(906659671 + i)
+print("Filled up bytearray ", grades_table.basePages[0][0].data)
+print("\n")
+print("partially filled up bytearray ", grades_table.basePages[1][0].data)
 insert_time_1 = process_time()
 
 print("Inserting 10k records took:  \t\t\t", insert_time_1 - insert_time_0)
