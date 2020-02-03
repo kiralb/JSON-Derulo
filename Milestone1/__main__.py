@@ -2,6 +2,7 @@ from template.db import Database
 from template.query import Query
 from time import process_time
 from random import choice, randrange
+import sys
 
 # Student Id and 4 grades
 db = Database()
@@ -11,8 +12,8 @@ keys = []
 
 # Measuring Insert Performance
 insert_time_0 = process_time()
-for i in range(0, 1):
-    query.insert(906659671 + i, 93, 0, 0, 0)
+for i in range(0, 450):
+    query.insert(123456789 + i, 93, 11, 12, 13)
     keys.append(906659671 + i)
 insert_time_1 = process_time()
 

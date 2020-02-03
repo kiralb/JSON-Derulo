@@ -9,7 +9,12 @@ class Page:
         self.data = bytearray(4096)
 
     def has_capacity(self):
-        pass
+    	pass
+    	# if(self.data > 4096):
+    	# 	print("Has Reached Capacity\n")
+    	# 	return false
+     #    return true
+        
 
     def write(self, value):
         self.num_records += 1

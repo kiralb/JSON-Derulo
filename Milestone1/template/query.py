@@ -1,5 +1,6 @@
 from template.table import Table, Record
 from template.index import Index
+import sys
 
 
 class Query:
@@ -20,20 +21,34 @@ class Query:
 
     def delete(self, key):
         pass
-	
-	# attribute = 9066596710
-	# i = 0
+    
+    def addToByteArray(self, physicalPage, attribute):
+        #Need to confir this adds to the bite array
+        byteArray = physicalPage.data 
+        attribute = str(attribute)
+
+        i = physicalPage.offset * physicalPage.num_records
+        j = 0
+        while(j < len(attribute)):
+            byteArray[i] = int(attribute[j])
+            byteArray[i] = int(attribute[j])
+            i = i + 1
+            j = j + 1
+        #print(byteArray)
+        physicalPage.num_records += 1
+    
+    
     def addToBasePages(self, attribute, i):
-		# add to basePage[5 + i]
-        print("accessing physical page: ", 4 + i)
         physicalPage = self.table.basePages[4 + i]
-        if (len(str(attribute)) < 3):
-			physicalPage.offset = 3
-		else:
-			physicalPage.offset = len(str(attribute))
+        if(len(str(attribute)) < 3):
+            physicalPage.offset = 3
+        else:
+            physicalPage.offset = len(str(attribute))
+        self.addToByteArray(physicalPage, attribute)
+
+
         
-		
-	
+    
     """
     # Insert a record with specified columns
     """
@@ -46,6 +61,9 @@ class Query:
            # add third parameter to bp 7 ...
            attribute = columns[i]
            self.addToBasePages(attribute, i)
+
+           #print("Printing the bite array: ", physicalPage.data, "\n")
+
         
         pass
 
