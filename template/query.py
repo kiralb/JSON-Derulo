@@ -25,6 +25,12 @@ class Query:
 
     def insert(self, *columns):
         schema_encoding = '0' * self.table.num_columns
+        RIDCounter = self.table.RIDCounter
+        key = columns[0]
+        # student ID matching with the RID
+        self.table.keyToRID[key] = RIDCounter
+        # incrementing so we're not mapping to the same RID
+        self.table.RIDCounter = self.table.RIDCounter + 1
         pass
 
     """

@@ -26,11 +26,15 @@ class Table:
         self.key = key
         self.num_columns = num_columns + 3
         self.page_directory = {}
+        self.RIDCounter = 0
+        # mapping our keys and RIDs
+        self.keyToRID = {}
 #        self.index = Index(self)
         
         
         self.pageRangeArray = []
         self.onePageRange = []
+        # contains sets of physical pages (id, quiz1, quiz2, etc.)
         self.physicalPages = []
         
         for i in range(self.num_columns):
