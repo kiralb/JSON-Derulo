@@ -26,7 +26,7 @@ class Table:
         self.key = key
         self.num_columns = num_columns + 4
         self.page_directory = {}
-        self.RIDCounter = 0
+        self.RIDCounter = 1
         # mapping our keys and RIDs
         self.keyToRID = {}
 #        self.index = Index(self)

@@ -21,16 +21,16 @@ class Query:
 
     def mapRIDToIndices(self):
         arrayOfIndices = []
-        firstIndex = self.table.RIDCounter // 2048 # 1
+        firstIndex = (self.table.RIDCounter - 1) // 2048 # 1
         secondIndex = 0
-        temp2 = self.table.RIDCounter - firstIndex * 2048 #0
+        temp2 = (self.table.RIDCounter - 1) - firstIndex * 2048 #0
         thirdIndex = 0
         temp4 = 0
         if (temp2 > 1023):
             secondIndex = 1
             temp4 = temp2 - 1024
         else:
-            temp4 = self.table.RIDCounter % 2048
+            temp4 = (self.table.RIDCounter - 1) % 2048
         arrayOfIndices.append(firstIndex)
         arrayOfIndices.append(secondIndex)
         arrayOfIndices.append(thirdIndex)
@@ -120,7 +120,7 @@ class Query:
 #            print( int.from_bytes(tempByteArray, byteorder = 'big'))
             if (query_columns[i] == 1):
                 recordToPrint.append(int.from_bytes(tempByteArray, byteorder = 'big'))
-#        print(recordToPrint)
+        print(recordToPrint)
         
             
             

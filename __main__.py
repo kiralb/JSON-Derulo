@@ -15,7 +15,7 @@ for i in range(0, 10240):
     query.insert(906659671 + i, 93, 0, 0, 0)
     keys.append(906659671 + i)
 byteArray = grades_table.pageRangeArray[0][0][1].data
-print(byteArray)
+#print(byteArray)
 insert_time_1 = process_time()
 
 print("Inserting 10k records took:  \t\t\t", insert_time_1 - insert_time_0)
