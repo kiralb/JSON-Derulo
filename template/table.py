@@ -24,7 +24,7 @@ class Table:
     def __init__(self, name, num_columns, key):
         self.name = name
         self.key = key
-        self.num_columns = num_columns
+        self.num_columns = num_columns + 4
         self.page_directory = {}
         self.RIDCounter = 0
         # mapping our keys and RIDs

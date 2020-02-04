@@ -24,7 +24,7 @@ class Query:
         firstIndex = self.table.RIDCounter // 2048 # 1
         secondIndex = 0
         temp2 = self.table.RIDCounter - firstIndex * 2048 #0
-        thirdIndex = 0
+        thirdIndex = 4
         temp4 = 0
         if (temp2 > 1023):
             secondIndex = 1
@@ -39,7 +39,7 @@ class Query:
 
 
     def addNewPageRange(self, secondIndex, thirdIndex, fourthIndex):
-        if (secondIndex == 0 and thirdIndex == 0 and fourthIndex == 0):
+        if (secondIndex == 0 and thirdIndex == 4 and fourthIndex == 0):
             return True
         else:
             return False
@@ -62,7 +62,6 @@ class Query:
 		# page_directory = { 0: [0, 0, 0, 0] }
         self.mapRIDToIndices()
         schema_encoding = '0' * self.table.num_columns
-
         ### mapping keys to RIDs ###
         RIDCounter = self.table.RIDCounter
         key = columns[0]
@@ -70,15 +69,15 @@ class Query:
         self.table.keyToRID[key] = RIDCounter
         numColumns = self.table.num_columns
         #print("numColumns: ", numColumns)
-        for i in range(numColumns - 1):
+        for i in range(numColumns - 4):
             attribute = columns[i]
             firstIndex = self.table.page_directory[RIDCounter][0]
             secondIndex = self.table.page_directory[RIDCounter][1]
-            thirdIndex = i
+            thirdIndex = i + 4
             fourthIndex = self.table.page_directory[RIDCounter][3]
             if (self.addNewPageRange(secondIndex, thirdIndex, fourthIndex)):
                 self.table.addPageRange()
-            #print("rid: ", RIDCounter, " firstIndex: ", firstIndex, " secondINdex: ", secondIndex, " thirdIndex: ", thirdIndex, " fourthIndex: ", fourthIndex)
+            print("rid: ", RIDCounter, " firstIndex: ", firstIndex, " secondINdex: ", secondIndex, " thirdIndex: ", thirdIndex, " fourthIndex: ", fourthIndex)
             physicalPageToAdd = self.table.pageRangeArray[firstIndex][secondIndex][thirdIndex]
             self.addToByteArray(physicalPageToAdd, fourthIndex, attribute)
 
