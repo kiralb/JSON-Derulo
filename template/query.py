@@ -68,13 +68,13 @@ class Query:
         # student ID matching with the RID
         self.table.keyToRID[key] = RIDCounter
         numColumns = self.table.num_columns
-        #print("numColumns: ", numColumns)
+        firstIndex = self.table.page_directory[RIDCounter][0]
+        secondIndex = self.table.page_directory[RIDCounter][1]
+        fourthIndex = self.table.page_directory[RIDCounter][3]
+        
         for i in range(numColumns - 4):
             attribute = columns[i]
-            firstIndex = self.table.page_directory[RIDCounter][0]
-            secondIndex = self.table.page_directory[RIDCounter][1]
             thirdIndex = i + 4
-            fourthIndex = self.table.page_directory[RIDCounter][3]
             if (self.addNewPageRange(secondIndex, thirdIndex, fourthIndex)):
                 self.table.addPageRange()
             #print("rid: ", RIDCounter, " firstIndex: ", firstIndex, " secondINdex: ", secondIndex, " thirdIndex: ", thirdIndex, " fourthIndex: ", fourthIndex)
