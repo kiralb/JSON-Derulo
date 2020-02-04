@@ -30,14 +30,14 @@ class Table:
         # mapping our keys and RIDs
         self.keyToRID = {}
 #        self.index = Index(self)
-
-
+        
+        
         self.pageRangeArray = []
         self.onePageRange = []
         # contains sets of physical pages (id, quiz1, quiz2, etc.)
         self.physicalPagesSet1 = []
         self.physicalPagesSet2 = []
-
+        
         for i in range(self.num_columns):
             self.physicalPageToAddToSet1 = Page()
             self.physicalPageToAddToSet2 = Page()
@@ -47,10 +47,10 @@ class Table:
         self.onePageRange.append(self.physicalPagesSet1)
         self.onePageRange.append(self.physicalPagesSet2)
         self.pageRangeArray.append(self.onePageRange)
-
+                
         pass
-
-
+        
+    
     def addPageRange(self):
         newPageRange = []
         physPageSet1 = []
@@ -66,3 +66,4 @@ class Table:
 
     def __merge(self):
         pass
+ 

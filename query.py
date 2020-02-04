@@ -4,7 +4,7 @@ from template.index import Index
 
 class Query:
     """
-    # Creates a Query object that can perform different queries on the specified table
+    # Creates a Query object that can perform different queries on the specified table 
     """
 
     def __init__(self, table):
@@ -18,12 +18,12 @@ class Query:
 
     def delete(self, key):
         pass
-
+        
     def mapRIDToIndices(self):
         arrayOfIndices = []
-        firstIndex = self.table.RIDCounter // 2048 # 1
+        firstIndex = self.table.RIDCounter // 2048
         secondIndex = 0
-        temp2 = self.table.RIDCounter - firstIndex * 2048 #0
+        temp2 = self.table.RIDCounter - firstIndex * 2048
         thirdIndex = 0
         temp4 = 0
         if (temp2 > 1023):
@@ -36,33 +36,30 @@ class Query:
         arrayOfIndices.append(thirdIndex)
         arrayOfIndices.append(temp4 * 4)
         self.table.page_directory[self.table.RIDCounter] = arrayOfIndices
-
-
+    
+    
     def addNewPageRange(self, secondIndex, thirdIndex, fourthIndex):
         if (secondIndex == 0 and thirdIndex == 0 and fourthIndex == 0):
             return True
         else:
             return False
-
+    
     def addToByteArray(self, physicalPage, offset, attribute):
         x = (int(attribute).to_bytes(4, 'big'))
         i = 0
         while (i < 4):
             physicalPage.data[offset + i] = x[i]
             i = i + 1
-
-
+    
+    
     """
     # Insert a record with specified columns
     """
 
     def insert(self, *columns):
-		#mapping will add to page_directory
-		# for example, adding RID = 0 will add
-		# page_directory = { 0: [0, 0, 0, 0] }
         self.mapRIDToIndices()
         schema_encoding = '0' * self.table.num_columns
-
+        
         ### mapping keys to RIDs ###
         RIDCounter = self.table.RIDCounter
         key = columns[0]
@@ -81,18 +78,16 @@ class Query:
             #print("rid: ", RIDCounter, " firstIndex: ", firstIndex, " secondINdex: ", secondIndex, " thirdIndex: ", thirdIndex, " fourthIndex: ", fourthIndex)
             physicalPageToAdd = self.table.pageRangeArray[firstIndex][secondIndex][thirdIndex]
             self.addToByteArray(physicalPageToAdd, fourthIndex, attribute)
-
-
-
-
-
-
-
-
+        
+        
+        
+        
+        
+        
+        
+        
         # incrementing so we're not mapping to the same RID
         self.table.RIDCounter = self.table.RIDCounter + 1
-
-
         pass
 
     """
@@ -112,7 +107,7 @@ class Query:
         pass
 
     """
-    :param start_range: int         # Start of the key range to aggregate
+    :param start_range: int         # Start of the key range to aggregate 
     :param end_range: int           # End of the key range to aggregate
     :param aggregate_columns: int  # Index of desired column to aggregate
     """
