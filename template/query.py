@@ -18,13 +18,35 @@ class Query:
 
     def delete(self, key):
         pass
+        
+    def mapRIDToIndices(self):
+        arrayOfIndices = []
+        firstIndex = self.table.RIDCounter // 2048
+        secondIndex = 0
+        temp2 = self.table.RIDCounter - firstIndex * 2048
+        thirdIndex = 0
+        temp4 = 0
+        if (temp2 > 1023):
+            secondIndex = 1
+            temp4 = temp2 - 1024
+        else:
+            temp4 = self.table.RIDCounter
+        arrayOfIndices.append(firstIndex)
+        arrayOfIndices.append(secondIndex)
+        arrayOfIndices.append(thirdIndex)
+        arrayOfIndices.append(temp4 * 4)
+        self.table.page_directory[self.table.RIDCounter] = arrayOfIndices
+    
 
     """
     # Insert a record with specified columns
     """
 
     def insert(self, *columns):
+        self.mapRIDToIndices()
         schema_encoding = '0' * self.table.num_columns
+        
+        ### mapping keys to RIDs ###
         RIDCounter = self.table.RIDCounter
         key = columns[0]
         # student ID matching with the RID
