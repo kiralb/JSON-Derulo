@@ -24,9 +24,21 @@ class Table:
     def __init__(self, name, num_columns, key):
         self.name = name
         self.key = key
-        self.num_columns = num_columns
+        self.num_columns = num_columns + 3
         self.page_directory = {}
-        self.index = Index(self)
+#        self.index = Index(self)
+        
+        
+        self.pageRangeArray = []
+        self.onePageRange = []
+        self.physicalPages = []
+        
+        for i in range(self.num_columns):
+            self.physicalPageToAdd = Page()
+            self.physicalPages.append(self.physicalPageToAdd)
+        self.onePageRange.append(self.physicalPages)
+        self.pageRangeArray.append(self.onePageRange)
+                
         pass
 
     def __merge(self):
