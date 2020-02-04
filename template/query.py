@@ -38,8 +38,8 @@ class Query:
         self.table.page_directory[self.table.RIDCounter] = arrayOfIndices
 
 
-    def addNewPageRange(self, secondIndex, thirdIndex, fourthIndex):
-        if (secondIndex == 0 and thirdIndex == 4 and fourthIndex == 0):
+    def addNewPageRange(self, secondIndex, fourthIndex):
+        if (secondIndex == 0 and fourthIndex == 0):
             return True
         else:
             return False
@@ -50,7 +50,7 @@ class Query:
         while (i < 4):
             physicalPage.data[offset + i] = x[i]
             i = i + 1
-
+    
 
     """
     # Insert a record with specified columns
@@ -71,17 +71,19 @@ class Query:
         firstIndex = self.table.page_directory[RIDCounter][0]
         secondIndex = self.table.page_directory[RIDCounter][1]
         fourthIndex = self.table.page_directory[RIDCounter][3]
-        
+        RIDPage = 1
+        if (self.addNewPageRange(secondIndex, fourthIndex)):
+            self.table.addPageRange()
+        RIDPhysicalPage = self.table.pageRangeArray[firstIndex][secondIndex][RIDPage]
+        self.addToByteArray(RIDPhysicalPage, fourthIndex, RIDCounter)
         for i in range(numColumns - 4):
             attribute = columns[i]
             thirdIndex = i + 4
-            if (self.addNewPageRange(secondIndex, thirdIndex, fourthIndex)):
-                self.table.addPageRange()
             #print("rid: ", RIDCounter, " firstIndex: ", firstIndex, " secondINdex: ", secondIndex, " thirdIndex: ", thirdIndex, " fourthIndex: ", fourthIndex)
             physicalPageToAdd = self.table.pageRangeArray[firstIndex][secondIndex][thirdIndex]
             self.addToByteArray(physicalPageToAdd, fourthIndex, attribute)
-
-
+            
+        
 
 
 
@@ -118,7 +120,7 @@ class Query:
 #            print( int.from_bytes(tempByteArray, byteorder = 'big'))
             if (query_columns[i] == 1):
                 recordToPrint.append(int.from_bytes(tempByteArray, byteorder = 'big'))
-        print(recordToPrint)
+#        print(recordToPrint)
         
             
             
