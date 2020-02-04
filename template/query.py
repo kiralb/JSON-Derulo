@@ -21,20 +21,20 @@ class Query:
         
     def mapRIDToIndices(self):
         arrayOfIndices = []
-        firstIndex = self.table.RIDCounter // 2048
+        firstIndex = self.table.RIDCounter // 2048 # 1
         secondIndex = 0
-        temp2 = self.table.RIDCounter - firstIndex * 2048
+        temp2 = self.table.RIDCounter - firstIndex * 2048 #0
         thirdIndex = 0
         temp4 = 0
         if (temp2 > 1023):
             secondIndex = 1
             temp4 = temp2 - 1024
         else:
-            temp4 = self.table.RIDCounter
+            temp4 = self.table.RIDCounter % 2048
         arrayOfIndices.append(firstIndex)
         arrayOfIndices.append(secondIndex)
         arrayOfIndices.append(thirdIndex)
-        arrayOfIndices.append(temp4 * 4)
+        arrayOfIndices.append(temp4)
         self.table.page_directory[self.table.RIDCounter] = arrayOfIndices
     
 
@@ -43,6 +43,9 @@ class Query:
     """
 
     def insert(self, *columns):
+		#mapping will add to page_directory
+		# for example, adding RID = 0 will add
+		# page_directory = { 0: [0, 0, 0, 0] }
         self.mapRIDToIndices()
         schema_encoding = '0' * self.table.num_columns
         
@@ -51,8 +54,18 @@ class Query:
         key = columns[0]
         # student ID matching with the RID
         self.table.keyToRID[key] = RIDCounter
+        
+        
+        
+        
+        
+        
+        
+        
         # incrementing so we're not mapping to the same RID
         self.table.RIDCounter = self.table.RIDCounter + 1
+        
+        
         pass
 
     """
