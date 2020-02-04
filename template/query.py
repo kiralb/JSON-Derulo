@@ -34,7 +34,7 @@ class Query:
         arrayOfIndices.append(firstIndex)
         arrayOfIndices.append(secondIndex)
         arrayOfIndices.append(thirdIndex)
-        arrayOfIndices.append(temp4)
+        arrayOfIndices.append(temp4 * 4)
         self.table.page_directory[self.table.RIDCounter] = arrayOfIndices
     
 

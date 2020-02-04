@@ -14,7 +14,7 @@ insert_time_0 = process_time()
 for i in range(0, 10240):
     query.insert(906659671 + i, 93, 0, 0, 0)
     keys.append(906659671 + i)
-print("6143 record indices: ", grades_table.page_directory[6143])
+print("0 record indices: ", grades_table.page_directory[0])
 insert_time_1 = process_time()
 
 print("Inserting 10k records took:  \t\t\t", insert_time_1 - insert_time_0)
