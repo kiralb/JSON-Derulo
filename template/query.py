@@ -101,6 +101,29 @@ class Query:
     """
 
     def select(self, key, query_columns):
+        recordToPrint = []
+        RID = self.table.keyToRID[key]
+        indices = self.table.page_directory[RID]
+        
+        for i in range(self.table.num_columns-4):
+            firstIndex = indices[0]
+            secondIndex = indices[1]
+            thirdIndex = i + 4
+            fourthIndex = indices[3]
+            tempByteArray = bytearray(4)
+            j = 0
+            while(j < 4):
+                tempByteArray[j] = self.table.pageRangeArray[firstIndex][secondIndex][thirdIndex].data[fourthIndex + j]
+                j = j + 1
+#            print( int.from_bytes(tempByteArray, byteorder = 'big'))
+            if (query_columns[i] == 1):
+                recordToPrint.append(int.from_bytes(tempByteArray, byteorder = 'big'))
+        print(recordToPrint)
+        
+            
+            
+            
+            
         pass
 
     """
