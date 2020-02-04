@@ -24,7 +24,7 @@ class Query:
         firstIndex = self.table.RIDCounter // 2048 # 1
         secondIndex = 0
         temp2 = self.table.RIDCounter - firstIndex * 2048 #0
-        thirdIndex = 4
+        thirdIndex = 0
         temp4 = 0
         if (temp2 > 1023):
             secondIndex = 1
@@ -77,7 +77,7 @@ class Query:
             fourthIndex = self.table.page_directory[RIDCounter][3]
             if (self.addNewPageRange(secondIndex, thirdIndex, fourthIndex)):
                 self.table.addPageRange()
-            print("rid: ", RIDCounter, " firstIndex: ", firstIndex, " secondINdex: ", secondIndex, " thirdIndex: ", thirdIndex, " fourthIndex: ", fourthIndex)
+            #print("rid: ", RIDCounter, " firstIndex: ", firstIndex, " secondINdex: ", secondIndex, " thirdIndex: ", thirdIndex, " fourthIndex: ", fourthIndex)
             physicalPageToAdd = self.table.pageRangeArray[firstIndex][secondIndex][thirdIndex]
             self.addToByteArray(physicalPageToAdd, fourthIndex, attribute)
 
