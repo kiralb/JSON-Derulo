@@ -31,10 +31,11 @@ class Query:
             temp4 = temp2 - 1024
         else:
             temp4 = (self.table.RIDCounter - 1) % 2048
+        fourthIndex = temp4 * 4
         arrayOfIndices.append(firstIndex)
         arrayOfIndices.append(secondIndex)
         arrayOfIndices.append(thirdIndex)
-        arrayOfIndices.append(temp4 * 4)
+        arrayOfIndices.append(fourthIndex)
         self.table.page_directory[self.table.RIDCounter] = arrayOfIndices
 
 
