@@ -25,11 +25,14 @@ class Table:
         self.name = name
         self.key = key
         self.num_columns = num_columns + 4
-        self.page_directory = {}
+        self.page_directory = {} # for head
+        self.page_directory2 = {} # for tail
         self.RIDCounter = 1
+        self.TIDCounter = 2,147,483,647
         # mapping our keys and RIDs
         self.keyToRID = {}
-#        self.index = Index(self)
+        self.keyToTID = {}
+
 
 
         self.pageRangeArray = [] #for base records

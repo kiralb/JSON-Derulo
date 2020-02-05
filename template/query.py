@@ -37,6 +37,8 @@ class Query:
         arrayOfIndices.append(thirdIndex)
         arrayOfIndices.append(fourthIndex)
         self.table.page_directory[self.table.RIDCounter] = arrayOfIndices
+        
+	
 
 
     def addNewPageRange(self, secondIndex, fourthIndex):
@@ -127,7 +129,9 @@ class Query:
     # Update a record with specified key and columns
     """
 
-    def update(self, key, *columns):
+    def update(self, key, *columns): # 913151525, [0, 1, 0, 0, 0]
+		self.mapTIDToIndices()
+		
         pass
 
     """
