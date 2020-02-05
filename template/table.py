@@ -34,24 +34,27 @@ class Table:
 
         self.pageRangeArray = [] #for base records
         self.pageRangeArray2 = [] # for tail records
+        self.addToPageArray(self.pageRangeArray)
+        self.addToPageArray(self.pageRangeArray2)
         
-        self.onePageRange = []
+        pass
+        
+        
+    def addToPageArray(self, bigPageArray):
+        onePageRange = []
         # contains sets of physical pages (id, quiz1, quiz2, etc.)
-        self.physicalPagesSet1 = []
-        self.physicalPagesSet2 = []
+        physicalPagesSet1 = []
+        physicalPagesSet2 = []
 
         for i in range(self.num_columns):
-            self.physicalPageToAddToSet1 = Page()
-            self.physicalPageToAddToSet2 = Page()
-            self.physicalPagesSet1.append(self.physicalPageToAddToSet1)
-            self.physicalPagesSet2.append(self.physicalPageToAddToSet2)
+            physicalPageToAddToSet1 = Page()
+            physicalPageToAddToSet2 = Page()
+            physicalPagesSet1.append(physicalPageToAddToSet1)
+            physicalPagesSet2.append(physicalPageToAddToSet2)
         # add 2 sets of physical pages to a page range
-        self.onePageRange.append(self.physicalPagesSet1)
-        self.onePageRange.append(self.physicalPagesSet2)
-        self.pageRangeArray.append(self.onePageRange)
-
-        pass
-
+        onePageRange.append(physicalPagesSet1)
+        onePageRange.append(physicalPagesSet2)
+        bigPageArray.append(onePageRange)
 
     def addPageRange(self):
         newPageRange = []

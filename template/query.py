@@ -80,17 +80,10 @@ class Query:
         for i in range(numColumns - 4):
             attribute = columns[i]
             thirdIndex = i + 4
-            #print("rid: ", RIDCounter, " firstIndex: ", firstIndex, " secondINdex: ", secondIndex, " thirdIndex: ", thirdIndex, " fourthIndex: ", fourthIndex)
+#            print("rid: ", RIDCounter, " firstIndex: ", firstIndex, " secondINdex: ", secondIndex, " thirdIndex: ", thirdIndex, " fourthIndex: ", fourthIndex)
             physicalPageToAdd = self.table.pageRangeArray[firstIndex][secondIndex][thirdIndex]
             self.addToByteArray(physicalPageToAdd, fourthIndex, attribute)
             
-        
-
-
-
-
-
-
         # incrementing so we're not mapping to the same RID
         self.table.RIDCounter = self.table.RIDCounter + 1
 
@@ -126,9 +119,6 @@ class Query:
         listOfRecordObjects.append(recordObject)
         return listOfRecordObjects
         
-            
-            
-            
             
         pass
 
