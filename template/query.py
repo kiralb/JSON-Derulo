@@ -42,7 +42,7 @@ class Query:
     
     def mapTIDToIndices(self):
         arrayOfIndices = []
-        print(self.table.TIDCounter)
+#        print(self.table.TIDCounter)
         firstIndex = ( (2**31)- self.table.TIDCounter - 1)  // 2048
         secondIndex = 0
         temp2 = ( ((2**31)- self.table.TIDCounter - 1)) - firstIndex * 2048
@@ -58,7 +58,7 @@ class Query:
         arrayOfIndices.append(secondIndex)
         arrayOfIndices.append(thirdIndex)
         arrayOfIndices.append(fourthIndex)
-        print(arrayOfIndices)
+#        print(arrayOfIndices)
         self.table.page_directory2[self.table.TIDCounter] = arrayOfIndices
         
         
@@ -115,7 +115,112 @@ class Query:
 
 
         pass
-
+    
+    def addToRecordArray(self, key, record):
+        RID = self.table.keyToRID[key]
+        firstIndex = self.table.page_directory[RID][0]
+        secondIndex = self.table.page_directory[RID][1]
+        fourthIndex = self.table.page_directory[RID][3]
+        numColumns = self.table.num_columns
+        for i in range(numColumns - 4):
+            thirdIndex = i + 4
+            tempbytearray = bytearray(4)
+            j = 0
+            while (j < 4):
+                tempbytearray[j] = self.table.pageRangeArray[firstIndex][secondIndex][thirdIndex].data[fourthIndex + j]
+                j = j + 1
+            attributeToAdd = (int).from_bytes(tempbytearray, byteorder = 'big')
+            record.append(attributeToAdd)
+    
+    def getTIDIndirection(self, currentTID):
+        firstIndex = self.table.page_directory2[currentTID][0]
+        secondIndex = self.table.page_directory2[currentTID][1]
+        thirdIndex = 0
+        fourthIndex = self.table.page_directory2[currentTID][3]
+        TIDIndirectionPage = self.table.pageRangeArray2[firstIndex][secondIndex][thirdIndex]
+        
+        j = 0
+        tempbytearray = bytearray(4)
+        while (j < 4):
+            tempbytearray[j] = TIDIndirectionPage.data[fourthIndex + j]
+            j = j + 1
+#        print((int).from_bytes(tempbytearray, byteorder = 'big'))
+        return (int).from_bytes(tempbytearray, byteorder = 'big')
+    
+    
+    def getTIDsSchema(self, currentTID):
+        firstIndex = self.table.page_directory2[currentTID][0]
+        secondIndex = self.table.page_directory2[currentTID][1]
+        thirdIndex = 3
+        fourthIndex = self.table.page_directory2[currentTID][3]
+        TIDPage = self.table.pageRangeArray2[firstIndex][secondIndex][thirdIndex]
+        
+        tempbytearray = bytearray(4)
+        j = 0
+        while (j < 4):
+            tempbytearray[j] = TIDPage.data[fourthIndex + j]
+            j = j + 1
+        return (int).from_bytes(tempbytearray, byteorder = 'big')
+    
+    
+    def putZerosInTheFront(self, number):
+        y = str(number)
+        i = 0
+        while (i < 5):
+            if (len(y) < 5):
+                y = "0" + y
+            i = i + 1
+        
+        return y
+        
+    
+    def addToTIDRecordArray(self, TIDRecord, currentTID):
+        firstIndex = self.table.page_directory2[currentTID][0]
+        secondIndex = self.table.page_directory2[currentTID][1]
+        fourthIndex = self.table.page_directory2[currentTID][3]
+        numColumns = self.table.num_columns
+        
+        for i in range(numColumns - 4):
+            thirdIndex = i + 4
+            physicalPage = self.table.pageRangeArray2[firstIndex][secondIndex][thirdIndex]
+            
+            tempbytearray = bytearray(4)
+            j = 0
+            while (j < 4):
+                tempbytearray[j] = physicalPage.data[fourthIndex + j]
+                j = j + 1
+            TIDRecord.append(int.from_bytes(tempbytearray, byteorder = 'big'))
+            
+        
+        
+    
+    
+    def getLatestRecord(self, indirection, record, baseRID):
+        currentTID = indirection
+        TIDRecord = []
+        self.addToTIDRecordArray(TIDRecord, currentTID)
+        schemaIndexSet = "" # used later to check if schema index is in string
+        
+        while (self.getTIDIndirection(currentTID) != baseRID):
+            TIDSchema = self.getTIDsSchema(currentTID)
+            schema = self.putZerosInTheFront(TIDSchema)
+            for i in range(len(schema)):
+                if (schema[i] == "1"):
+                    if (str(i) not in schemaIndexSet):
+                        schemaIndexSet += str(i)
+                        record[i] = TIDRecord[i]
+            currentTID = self.getTIDIndirection(currentTID)
+        TIDSchema = self.getTIDsSchema(currentTID)
+        schema = self.putZerosInTheFront(TIDSchema)
+        for i in range(len(schema)):
+            if (schema[i] == "1"):
+                if (str(i) not in schemaIndexSet):
+                    schemaIndexSet += str(i)
+                    record[i] = TIDRecord[i]
+            
+            
+            
+    
     """
     # Read a record with specified key
     # :param key: the key value to select records based on
@@ -124,30 +229,26 @@ class Query:
 
     def select(self, key, query_columns):
         listOfRecordObjects = []
-        arrayOfAttributes = []
-        RID = self.table.keyToRID[key]
-        indices = self.table.page_directory[RID]
+         # add to original data to record array
+        record = []
+        baseRecordsRID = self.table.keyToRID[key]
+        self.addToRecordArray(key, record)
+        baseRecordsIndirection = self.getIndirectionFromBaseRecord(key)
+#        print("baserecordsindirection", baseRecordsIndirection)
+        if (baseRecordsIndirection != 0):
+            self.getLatestRecord(baseRecordsIndirection, record, baseRecordsRID)
+#        print("record: ", record)
         
-        for i in range(self.table.num_columns-4):
-            firstIndex = indices[0]
-            secondIndex = indices[1]
-            thirdIndex = i + 4
-            fourthIndex = indices[3]
-            tempByteArray = bytearray(4)
-            j = 0
-            while(j < 4):
-                tempByteArray[j] = self.table.pageRangeArray[firstIndex][secondIndex][thirdIndex].data[fourthIndex + j]
-                j = j + 1
-#            print( int.from_bytes(tempByteArray, byteorder = 'big'))
-            if (query_columns[i] == 1):
-                arrayOfAttributes.append(int.from_bytes(tempByteArray, byteorder = 'big'))
-        recordObject = Record(RID, key, arrayOfAttributes)
-        listOfRecordObjects.append(recordObject)
-#        print(recordObject.columns)
+        recordObj = Record(baseRecordsRID, key, record)
+        listOfRecordObjects.append(recordObj)
         return listOfRecordObjects
+#        print("selecting record: ", record)
+
+
+
         
             
-        pass
+            
         
     def obtainIndirection(self, indirectionPage, fourthIndex):
         j = 0
@@ -167,6 +268,7 @@ class Query:
         
         indirectionPage = self.table.pageRangeArray[firstIndex][secondIndex][thirdIndex]
         indirection = self.obtainIndirection(indirectionPage, fourthIndex)
+#        print("indirection: ", indirection)
         return indirection
         
         
