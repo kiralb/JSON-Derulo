@@ -204,19 +204,30 @@ class Query:
         while (self.getTIDIndirection(currentTID) != baseRID):
             TIDSchema = self.getTIDsSchema(currentTID)
             schema = self.putZerosInTheFront(TIDSchema)
+#            print("schema: ", schema)
+#            print("TID: ", TIDRecord, " schema: ", schema)
             for i in range(len(schema)):
                 if (schema[i] == "1"):
                     if (str(i) not in schemaIndexSet):
                         schemaIndexSet += str(i)
                         record[i] = TIDRecord[i]
+#                        print("record1: ", record)
+
+#            print("currentTID before: ", currentTID)
             currentTID = self.getTIDIndirection(currentTID)
+#            print("currentTID after: ", currentTID)
         TIDSchema = self.getTIDsSchema(currentTID)
+#        print("TIDSchema: ", TIDSchema)
         schema = self.putZerosInTheFront(TIDSchema)
         for i in range(len(schema)):
             if (schema[i] == "1"):
                 if (str(i) not in schemaIndexSet):
                     schemaIndexSet += str(i)
                     record[i] = TIDRecord[i]
+
+                    
+                    
+        print("record final: ", record)
             
             
             
@@ -233,8 +244,10 @@ class Query:
         record = []
         baseRecordsRID = self.table.keyToRID[key]
         self.addToRecordArray(key, record)
+#        print(record)
         baseRecordsIndirection = self.getIndirectionFromBaseRecord(key)
 #        print("baserecordsindirection", baseRecordsIndirection)
+#        print("baseRecordsIndirection: ", baseRecordsIndirection)
         if (baseRecordsIndirection != 0):
             self.getLatestRecord(baseRecordsIndirection, record, baseRecordsRID)
 #        print("record: ", record)
@@ -280,20 +293,21 @@ class Query:
 
         
     def reassignBaseRecordIndirection(self, baseRecordIndirectionPage, TIDCounter, baseRecordRID):
-        offset = self.table.page_directory[baseRecordRID][3]
+        print("TIDCounter: ", TIDCounter)
+        offset = self.table.page_directory[baseRecordRID][3] # { 0: [0 0 0 0]}
         tempbytearray = (TIDCounter).to_bytes(4,'big')
         j = 0
         while (j < 4):
             baseRecordIndirectionPage.data[offset + j] = tempbytearray[j]
             j = j + 1
-        
-        
+#        print(baseRecordIndirectionPage.data)
     def addSchemaString(self, TIDSchemaPage, schemaString, offset):
         y = int(schemaString).to_bytes(4, byteorder = 'big')
         j = 0
         while (j < 4):
             TIDSchemaPage.data[offset + j] = y[j]
             j = j + 1
+        
     
     """
     # Update a record with specified key and columns
@@ -317,11 +331,13 @@ class Query:
         schemaPage = 3
         TIDSchemaPage = self.table.pageRangeArray2[firstIndex][secondIndex][schemaPage]
         schemaString = ""
+        
         for i in range(len(columns)):
             if (columns[i] == None):
                 schemaString += "0"
             else:
                 schemaString += "1"
+#        print("schemaString: ", schemaString)
         self.addSchemaString(TIDSchemaPage, schemaString, fourthIndex)
         
         IndirectionPage = 0
@@ -335,14 +351,17 @@ class Query:
         # so this will be the first tail record for that base record
         if (baseRecordsIndirection == 0):
             # change tail record's indirection to the base record's RID
+#             print("got here")
              self.addToByteArray(TIDIndirectionPage, fourthIndex, baseRecordsRID)
 
         # else handle subsequent tail records if baseRecordsIndirection is != 0
         else:
+#            print("got into else")
             # put base record indirection into tail's indirection column
             self.addToByteArray(TIDIndirectionPage, fourthIndex, baseRecordsIndirection)
-        
+#        print("got out of else")
         # update base record's indirection column to the tail record's TID
+#        print(baseRecordsIndirectionPage.data)
         self.reassignBaseRecordIndirection(baseRecordsIndirectionPage, TIDCounter, baseRecordsRID)
         
         #TODO: UPDATE BASE RECORD'S SCHEMA ENCODING

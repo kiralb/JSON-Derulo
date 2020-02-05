@@ -36,6 +36,8 @@ for key in records:
 
 for key in records:
     updated_columns = [None, None, None, None, None]
+    print("_________________")
+    print("numCOlumns: ", grades_table.num_columns)
     for i in range(1, grades_table.num_columns):
         value = randint(0, 20)
         updated_columns[i] = value
