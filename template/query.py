@@ -204,20 +204,16 @@ class Query:
         while (self.getTIDIndirection(currentTID) != baseRID):
             TIDSchema = self.getTIDsSchema(currentTID)
             schema = self.putZerosInTheFront(TIDSchema)
-#            print("schema: ", schema)
-#            print("TID: ", TIDRecord, " schema: ", schema)
+#            print("TIDRecord: ", TIDRecord," schema: ", schema)
             for i in range(len(schema)):
                 if (schema[i] == "1"):
                     if (str(i) not in schemaIndexSet):
                         schemaIndexSet += str(i)
                         record[i] = TIDRecord[i]
-#                        print("record1: ", record)
-
-#            print("currentTID before: ", currentTID)
             currentTID = self.getTIDIndirection(currentTID)
-#            print("currentTID after: ", currentTID)
+            TIDRecord = []
+            self.addToTIDRecordArray(TIDRecord, currentTID)
         TIDSchema = self.getTIDsSchema(currentTID)
-#        print("TIDSchema: ", TIDSchema)
         schema = self.putZerosInTheFront(TIDSchema)
         for i in range(len(schema)):
             if (schema[i] == "1"):
@@ -225,9 +221,9 @@ class Query:
                     schemaIndexSet += str(i)
                     record[i] = TIDRecord[i]
 
-                    
-                    
-        print("record final: ", record)
+                        
+#        print("TID Record: ", TIDRecord)
+#        print("record final: ", record)
             
             
             
@@ -293,7 +289,7 @@ class Query:
 
         
     def reassignBaseRecordIndirection(self, baseRecordIndirectionPage, TIDCounter, baseRecordRID):
-        print("TIDCounter: ", TIDCounter)
+#        print("TIDCounter: ", TIDCounter)
         offset = self.table.page_directory[baseRecordRID][3] # { 0: [0 0 0 0]}
         tempbytearray = (TIDCounter).to_bytes(4,'big')
         j = 0
