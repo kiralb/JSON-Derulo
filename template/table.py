@@ -12,7 +12,7 @@ class Record:
     def __init__(self, rid, key, columns):
         self.rid = rid
         self.key = key
-        self.columns = columns
+        self.columns = columns 
 
 class Table:
 
@@ -32,7 +32,9 @@ class Table:
 #        self.index = Index(self)
 
 
-        self.pageRangeArray = []
+        self.pageRangeArray = [] #for base records
+        self.pageRangeArray2 = [] # for tail records
+        
         self.onePageRange = []
         # contains sets of physical pages (id, quiz1, quiz2, etc.)
         self.physicalPagesSet1 = []

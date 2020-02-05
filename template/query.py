@@ -104,7 +104,8 @@ class Query:
     """
 
     def select(self, key, query_columns):
-        recordToPrint = []
+        listOfRecordObjects = []
+        arrayOfAttributes = []
         RID = self.table.keyToRID[key]
         indices = self.table.page_directory[RID]
         
@@ -120,8 +121,10 @@ class Query:
                 j = j + 1
 #            print( int.from_bytes(tempByteArray, byteorder = 'big'))
             if (query_columns[i] == 1):
-                recordToPrint.append(int.from_bytes(tempByteArray, byteorder = 'big'))
-        print(recordToPrint)
+                arrayOfAttributes.append(int.from_bytes(tempByteArray, byteorder = 'big'))
+        recordObject = Record(RID, key, arrayOfAttributes)
+        listOfRecordObjects.append(recordObject)
+        return listOfRecordObjects
         
             
             
