@@ -238,6 +238,8 @@ class Query:
         listOfRecordObjects = []
          # add to original data to record array
         record = []
+        if (key not in self.table.keyToRID):
+        	return listOfRecordObjects
         baseRecordsRID = self.table.keyToRID[key]
         self.addToRecordArray(key, record)
 #        print(record)
@@ -391,4 +393,32 @@ class Query:
     """
 
     def sum(self, start_range, end_range, aggregate_column_index):
-        pass
+    	summation = 0
+
+    	for i in range(start_range, end_range + 1):
+    		columnToAdd = self.select(i, [1, 1, 1, 1, 1])
+    		if (len(columnToAdd) != 0):
+    			summation += columnToAdd[0].columns[aggregate_column_index]
+    		# summation += columnToAdd	
+
+
+
+
+
+
+
+
+
+
+    	return summation
+
+
+    	pass
+
+
+
+
+
+
+
+

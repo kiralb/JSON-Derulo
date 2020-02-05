@@ -24,6 +24,7 @@ for i in range(0, 1000):
     print('inserted', records[key])
 
 for key in records:
+    print("trying to select: ", key)
     record = query.select(key, [1, 1, 1, 1, 1])[0]
     error = False
     for i, column in enumerate(record.columns):
@@ -54,7 +55,7 @@ for key in records:
         updated_columns[i] = None
 
 keys = sorted(list(records.keys()))
-for c in range(0, grades_table.num_columns):
+for c in range(0, grades_table.num_columns - 4):
     for i in range(0, 20):
         r = sorted(sample(range(0, len(keys)), 2))
         column_sum = sum(map(lambda key: records[key][c], keys[r[0]: r[1] + 1]))
