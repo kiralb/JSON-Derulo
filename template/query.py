@@ -74,7 +74,7 @@ class Query:
         fourthIndex = self.table.page_directory[RIDCounter][3]
         RIDPage = 1
         if (self.addNewPageRange(secondIndex, fourthIndex)):
-            self.table.addPageRange()
+            self.table.addPageRange(self.table.pageRangeArray)
         RIDPhysicalPage = self.table.pageRangeArray[firstIndex][secondIndex][RIDPage]
         self.addToByteArray(RIDPhysicalPage, fourthIndex, RIDCounter)
         for i in range(numColumns - 4):
@@ -117,6 +117,7 @@ class Query:
                 arrayOfAttributes.append(int.from_bytes(tempByteArray, byteorder = 'big'))
         recordObject = Record(RID, key, arrayOfAttributes)
         listOfRecordObjects.append(recordObject)
+#        print(recordObject.columns)
         return listOfRecordObjects
         
             

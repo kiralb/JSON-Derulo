@@ -56,7 +56,7 @@ class Table:
         onePageRange.append(physicalPagesSet2)
         bigPageArray.append(onePageRange)
 
-    def addPageRange(self):
+    def addPageRange(self, bigPageArray):
         newPageRange = []
         physPageSet1 = []
         physPageSet2 = []
@@ -67,7 +67,7 @@ class Table:
             physPageSet2.append(physPageToAddToSet2)
         newPageRange.append(physPageSet1)
         newPageRange.append(physPageSet2)
-        self.pageRangeArray.append(newPageRange)
+        bigPageArray.append(newPageRange)
 
     def __merge(self):
         pass
