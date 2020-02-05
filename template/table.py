@@ -28,7 +28,7 @@ class Table:
         self.page_directory = {} # for head
         self.page_directory2 = {} # for tail
         self.RIDCounter = 1
-        self.TIDCounter = 2,147,483,647
+        self.TIDCounter = 2147483647
         # mapping our keys and RIDs
         self.keyToRID = {}
         self.keyToTID = {}

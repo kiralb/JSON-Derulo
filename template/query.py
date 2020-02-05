@@ -38,6 +38,27 @@ class Query:
         arrayOfIndices.append(fourthIndex)
         self.table.page_directory[self.table.RIDCounter] = arrayOfIndices
         
+    
+    def mapTIDToIndices(self):
+        arrayOfIndices = []
+        firstIndex = ( (2**31)- self.table.TIDCounter - 1)  // 2048
+        secondIndex = 0
+        temp2 = ( (2**31)- self.table.TIDCounter - 1) - firstIndex * 2048
+        thirdIndex = 0
+        temp4 = 0
+        if (temp2 > 1023):
+            secondIndex = 1
+            temp4 = temp2 - 1024
+        else:
+            temp4 = ( (2**31)- self.table.TIDCounter - 1)  % 2048
+        fourthIndex = temp4 * 4
+        arrayOfIndices.append(firstIndex)
+        arrayOfIndices.append(secondIndex)
+        arrayOfIndices.append(thirdIndex)
+        arrayOfIndices.append(fourthIndex)
+        self.table.page_directory2[self.table.TIDCounter] = arrayOfIndices
+        
+        
 	
 
 
@@ -129,8 +150,20 @@ class Query:
     # Update a record with specified key and columns
     """
 
-    def update(self, key, *columns): # 913151525, [0, 1, 0, 0, 0]
-		self.mapTIDToIndices()
+    def update(self, key, *columns): # 913151525, [None, 69 , None, None, None]
+        self.mapTIDToIndices()
+        self.table.keyToTID[key] = self.table.TIDCounter
+        
+        
+        print(self.table.page_directory2[self.table.TIDCounter])
+        
+        
+        
+        
+        
+        
+        
+        self.table.TIDCounter -= 1
 		
         pass
 
