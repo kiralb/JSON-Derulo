@@ -24,7 +24,7 @@ class Table:
     def __init__(self, name, num_columns, key):
         self.name = name
         self.key = key
-        self.num_columns = num_columns + 4
+        self.num_columns = num_columns
         self.page_directory = {} # for head
         self.page_directory2 = {} # for tail
         self.RIDCounter = 1
@@ -49,7 +49,7 @@ class Table:
         physicalPagesSet1 = []
         physicalPagesSet2 = []
 
-        for i in range(self.num_columns):
+        for i in range(self.num_columns + 4):
             physicalPageToAddToSet1 = Page()
             physicalPageToAddToSet2 = Page()
             physicalPagesSet1.append(physicalPageToAddToSet1)
@@ -63,7 +63,7 @@ class Table:
         newPageRange = []
         physPageSet1 = []
         physPageSet2 = []
-        for i in range(self.num_columns):
+        for i in range(self.num_columns + 4):
             physPageToAddToSet1 = Page()
             physPageToAddToSet2 = Page()
             physPageSet1.append(physPageToAddToSet1)

@@ -94,7 +94,7 @@ class Query:
         key = columns[0]
         # student ID matching with the RID
         self.table.keyToRID[key] = RIDCounter
-        numColumns = self.table.num_columns
+        numColumns = self.table.num_columns + 4
         firstIndex = self.table.page_directory[RIDCounter][0]
         secondIndex = self.table.page_directory[RIDCounter][1]
         fourthIndex = self.table.page_directory[RIDCounter][3]
@@ -121,7 +121,7 @@ class Query:
         firstIndex = self.table.page_directory[RID][0]
         secondIndex = self.table.page_directory[RID][1]
         fourthIndex = self.table.page_directory[RID][3]
-        numColumns = self.table.num_columns
+        numColumns = self.table.num_columns + 4
         for i in range(numColumns - 4):
             thirdIndex = i + 4
             tempbytearray = bytearray(4)
@@ -178,7 +178,7 @@ class Query:
         firstIndex = self.table.page_directory2[currentTID][0]
         secondIndex = self.table.page_directory2[currentTID][1]
         fourthIndex = self.table.page_directory2[currentTID][3]
-        numColumns = self.table.num_columns
+        numColumns = self.table.num_columns + 4
         
         for i in range(numColumns - 4):
             thirdIndex = i + 4
@@ -316,7 +316,7 @@ class Query:
         self.mapTIDToIndices()
         self.table.keyToTID[key] = TIDCounter
 #        print(TIDCounter)
-        numColumns = self.table.num_columns
+        numColumns = self.table.num_columns + 4
         firstIndex = self.table.page_directory2[TIDCounter][0]
         secondIndex = self.table.page_directory2[TIDCounter][1]
         fourthIndex = self.table.page_directory2[TIDCounter][3]

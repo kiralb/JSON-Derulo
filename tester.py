@@ -37,7 +37,7 @@ for key in records:
 
 for key in records:
     updated_columns = [None, None, None, None, None]
-    for i in range(1, grades_table.num_columns - 4):
+    for i in range(1, grades_table.num_columns):
         value = randint(0, 20)
         updated_columns[i] = value
         original = records[key].copy()
@@ -55,7 +55,7 @@ for key in records:
         updated_columns[i] = None
 
 keys = sorted(list(records.keys()))
-for c in range(0, grades_table.num_columns - 4):
+for c in range(0, grades_table.num_columns):
     for i in range(0, 20):
         r = sorted(sample(range(0, len(keys)), 2))
         column_sum = sum(map(lambda key: records[key][c], keys[r[0]: r[1] + 1]))
