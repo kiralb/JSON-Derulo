@@ -24,7 +24,6 @@ for i in range(0, 1000):
     print('inserted', records[key])
 
 for key in records:
-    print("trying to select: ", key)
     record = query.select(key, [1, 1, 1, 1, 1])[0]
     error = False
     for i, column in enumerate(record.columns):

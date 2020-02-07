@@ -380,8 +380,6 @@ class Query:
         
         
         
-        
-        
         self.table.TIDCounter -= 1
 		
         pass
