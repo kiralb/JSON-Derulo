@@ -252,9 +252,13 @@ class Query:
         for i in range(self.table.num_columns):
             if (query_columns[i] == 1):
                 queryRecord.append(record[i])
+            else:
+                queryRecord.append(None)
 
         recordObj = Record(baseRecordsRID, key, queryRecord)
         listOfRecordObjects.append(recordObj)
+
+        # print("listOfRecordObjects: ", listOfRecordObjects[0].columns)
 
         return listOfRecordObjects
 
