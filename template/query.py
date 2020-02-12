@@ -163,15 +163,15 @@ class Query:
         return (int).from_bytes(tempbytearray, byteorder = 'big')
 
 
-    def putZerosInTheFront(self, schema):
-        schemaString = str(schema)
+    def putZerosInTheFront(self, number):
+        y = str(number)
         i = 0
-        while (i < self.table.num_columns):
-            if (len(schemaString) < self.table.num_columns):
-                schemaString = "0" + schemaString
+        while (i < 5):
+            if (len(y) < 5):
+                y = "0" + y
             i = i + 1
 
-        return schemaString
+        return y
 
 
     def addToTIDRecordArray(self, TIDRecord, currentTID):
@@ -238,22 +238,26 @@ class Query:
         listOfRecordObjects = []
          # add to original data to record array
         record = []
+        queryRecord = []
         if (key not in self.table.keyToRID):
         	return listOfRecordObjects
         baseRecordsRID = self.table.keyToRID[key]
         self.addToRecordArray(key, record)
-#        print(record)
+
         baseRecordsIndirection = self.getIndirectionFromBaseRecord(key)
-#        print("baserecordsindirection", baseRecordsIndirection)
-#        print("baseRecordsIndirection: ", baseRecordsIndirection)
+
         if (baseRecordsIndirection != 0):
             self.getLatestRecord(baseRecordsIndirection, record, baseRecordsRID)
-#        print("record: ", record)
 
-        recordObj = Record(baseRecordsRID, key, record)
+        for i in range(self.table.num_columns):
+            if (query_columns[i] == 1):
+                queryRecord.append(record[i])
+
+        recordObj = Record(baseRecordsRID, key, queryRecord)
         listOfRecordObjects.append(recordObj)
+
         return listOfRecordObjects
-#        print("selecting record: ", record)
+
 
 
 
