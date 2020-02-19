@@ -7,6 +7,13 @@ class Database():
         pass
 
     def open(self, path):
+        path = "ECS165"
+        try:
+            os.mkdir(path)
+        except OSError:
+            print("creation of dir", path, "failed")
+        else:
+            print("creation of dir ",path," passed")
         pass
 
     def close(self):
