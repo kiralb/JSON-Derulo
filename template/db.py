@@ -1,4 +1,5 @@
 from template.table import Table
+import os
 
 class Database():
 
@@ -11,9 +12,9 @@ class Database():
         try:
             os.mkdir(path)
         except OSError:
-            print("creation of dir", path, "failed")
+            print("creation of dir", path, "already exists")
         else:
-            print("creation of dir ",path," passed")
+            print("creation of dir ", path, "passed")
         pass
 
     def close(self):
