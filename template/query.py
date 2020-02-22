@@ -78,6 +78,21 @@ class Query:
             physicalPage.data[offset + i] = x[i]
             i = i + 1
 
+    def insertIntoIndexObjects(self, columns):
+        RID = self.table.RIDCounter
+        accessListOfIndexObjects = self.table.listOfIndexObj
+        for i in range(self.table.num_columns):
+            indexObj = accessListOfIndexObjects[i]
+            dictionaryOfIndex = indexObj.keyToRIDList
+            attribute = columns[i]
+            if attribute not in dictionaryOfIndex:
+                dictionaryOfIndex[attribute] = [RID]
+            elif attribute in dictionaryOfIndex:
+                dictionaryOfIndex[attribute].append(RID)
+
+
+
+
 
     """
     # Insert a record with specified columns
@@ -91,6 +106,7 @@ class Query:
         schema_encoding = '0' * self.table.num_columns
         ### mapping keys to RIDs ###
         RIDCounter = self.table.RIDCounter
+        self.insertIntoIndexObjects(columns)
         key = columns[0]
         # student ID matching with the RID
         self.table.keyToRID[key] = RIDCounter
@@ -116,8 +132,8 @@ class Query:
 
         pass
 
-    def addToRecordArray(self, key, record):
-        RID = self.table.keyToRID[key]
+    def addToRecordArray(self, key, record, rid):
+        RID = rid
         firstIndex = self.table.page_directory[RID][0]
         secondIndex = self.table.page_directory[RID][1]
         fourthIndex = self.table.page_directory[RID][3]
@@ -234,29 +250,33 @@ class Query:
     # :param query_columns: what columns to return. array of 1 or 0 values.
     """
 
-    def select(self, key, query_columns):
+    def select(self, key, column, query_columns):
         listOfRecordObjects = []
-         # add to original data to record array
-        record = []
-        queryRecord = []
-        if (key not in self.table.keyToRID):
-        	return listOfRecordObjects
-        baseRecordsRID = self.table.keyToRID[key]
-        self.addToRecordArray(key, record)
+        if (key not in self.table.listOfIndexObj[column].keyToRIDList):
+            return listOfRecordObjects
 
-        baseRecordsIndirection = self.getIndirectionFromBaseRecord(key)
+        listOfRIDsToSelect = self.table.listOfIndexObj[column].keyToRIDList[key]
+        for RID in listOfRIDsToSelect:
+            # add to original data to record array
+            record = []
+            queryRecord = []
 
-        if (baseRecordsIndirection != 0):
-            self.getLatestRecord(baseRecordsIndirection, record, baseRecordsRID)
+            baseRecordsRID = RID
+            self.addToRecordArray(key, record, RID)
 
-        for i in range(self.table.num_columns):
-            if (query_columns[i] == 1):
-                queryRecord.append(record[i])
-            else:
-                queryRecord.append(None)
+            baseRecordsIndirection = self.getIndirectionFromBaseRecord(RID)
 
-        recordObj = Record(baseRecordsRID, key, queryRecord)
-        listOfRecordObjects.append(recordObj)
+            if (baseRecordsIndirection != 0):
+                self.getLatestRecord(baseRecordsIndirection, record, baseRecordsRID)
+
+            for i in range(self.table.num_columns):
+                if (query_columns[i] == 1):
+                    queryRecord.append(record[i])
+                else:
+                    queryRecord.append(None)
+
+            recordObj = Record(baseRecordsRID, key, queryRecord)
+            listOfRecordObjects.append(recordObj)
 
         # print("listOfRecordObjects: ", listOfRecordObjects[0].columns)
 
@@ -278,8 +298,8 @@ class Query:
         return int.from_bytes(tempbytearray, byteorder = 'big')
 
 
-    def getIndirectionFromBaseRecord(self, key):
-        baseRecordRID = self.table.keyToRID[key]
+    def getIndirectionFromBaseRecord(self, RID):
+        baseRecordRID = RID
         firstIndex = self.table.page_directory[baseRecordRID][0]
         secondIndex = self.table.page_directory[baseRecordRID][1]
         thirdIndex = self.table.page_directory[baseRecordRID][2]
@@ -349,7 +369,7 @@ class Query:
         IndirectionPage = 0
         TIDIndirectionPage = self.table.pageRangeArray2[firstIndex][secondIndex][IndirectionPage]
 
-        baseRecordsIndirection = self.getIndirectionFromBaseRecord(key)
+        baseRecordsIndirection = self.getIndirectionFromBaseRecord(self.table.keyToRID[key])
         baseRecordsRID = self.table.keyToRID[key]
         baseRecordsIndirectionPage = self.obtainBaseRecordIndirectionPage(baseRecordsRID)
 
@@ -402,7 +422,7 @@ class Query:
     	summation = 0
 
     	for i in range(start_range, end_range + 1):
-    		columnToAdd = self.select(i, [1, 1, 1, 1, 1])
+    		columnToAdd = self.select(i, 0, [1, 1, 1, 1, 1])
     		if (len(columnToAdd) != 0):
     			summation += columnToAdd[0].columns[aggregate_column_index]
     		# summation += columnToAdd

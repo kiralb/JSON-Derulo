@@ -5,8 +5,11 @@ A data strucutre holding indices for various columns of a table. Key column shou
 class Index:
 
     def __init__(self, table):
-        # One index for each table. All our empty initially.
-        self.indices = [None] *  table.num_columns
+        # professor's code that we're not using
+        # self.indices = [None] *  table.num_columns
+
+        self.keyToRIDList = {}
+
         pass
 
     """

@@ -1,4 +1,5 @@
 from template.page import *
+from template.index import *
 from time import time
 
 INDIRECTION_COLUMN = 0
@@ -12,7 +13,7 @@ class Record:
     def __init__(self, rid, key, columns):
         self.rid = rid
         self.key = key
-        self.columns = columns 
+        self.columns = columns
 
 class Table:
 
@@ -35,14 +36,26 @@ class Table:
 
 
 
+        # holds an index object for each column
+        self.listOfIndexObj = []
+        for column in range(num_columns):
+            self.indexObjectToAdd = Index(self)
+            self.listOfIndexObj.append(self.indexObjectToAdd)
+
+
+
+
+
+
+
         self.pageRangeArray = [] #for base records
         self.pageRangeArray2 = [] # for tail records
         self.addToPageArray(self.pageRangeArray)
         self.addToPageArray(self.pageRangeArray2)
-        
+
         pass
-        
-        
+
+
     def addToPageArray(self, bigPageArray):
         onePageRange = []
         # contains sets of physical pages (id, quiz1, quiz2, etc.)

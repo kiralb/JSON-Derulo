@@ -1,4 +1,5 @@
 from template.table import Table
+import os
 
 class Database():
 
@@ -6,6 +7,13 @@ class Database():
         self.tables = []
         pass
 
+
+    """
+
+    Initialize bufferpool here
+    Refer to top of page 2 of Milestone2.pdf
+
+    """
     def open(self, path):
         path = "ECS165"
         try:
@@ -16,6 +24,13 @@ class Database():
             print("creation of dir ",path," passed")
         pass
 
+
+
+    """
+
+    Flush changes back to disk after close is called
+
+    """
     def close(self):
         pass
 
