@@ -36,14 +36,12 @@ class Table:
 
 
 
-        # holds an index object for each column
+        # holds an index object for each column in base pages
         self.listOfIndexObj = []
         for column in range(num_columns):
             self.indexObjectToAdd = Index(self)
             self.listOfIndexObj.append(self.indexObjectToAdd)
-
-
-
+            
 
 
 

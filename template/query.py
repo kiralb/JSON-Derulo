@@ -9,6 +9,7 @@ class Query:
 
     def __init__(self, table):
         self.table = table
+        self.numBinFiles = 1
         pass
 
     """
@@ -91,6 +92,20 @@ class Query:
                 dictionaryOfIndex[attribute].append(RID)
 
 
+    def addToBinFiles(self, columns):
+        # print("this function got called")
+        if (self.table.RIDCounter % 2049 == 0):
+            self.numBinFiles += 1
+        nameOfFile = "pageRange" + str(self.numBinFiles) + ".bin"
+        f = open(nameOfFile, "wb")
+
+        byteArrayToAdd = bytearray(4)
+        for attribute in columns:
+            byteArrayToAdd = (attribute).to_bytes(4, byteorder = 'big')
+            f.write(byteArrayToAdd)
+        f.close()
+
+
 
 
 
@@ -99,6 +114,9 @@ class Query:
     """
 
     def insert(self, *columns):
+        f = open("plsOpen.bin", "wb")
+        """ Add to bin files """
+        self.addToBinFiles(columns)
 		#mapping will add to page_directory
 		# for example, adding RID = 0 will add
 		# page_directory = { 0: [0, 0, 0, 0] }
@@ -117,8 +135,10 @@ class Query:
         RIDPage = 1
         if (self.addNewPageRange(secondIndex, fourthIndex)):
             self.table.addPageRange(self.table.pageRangeArray)
+
         RIDPhysicalPage = self.table.pageRangeArray[firstIndex][secondIndex][RIDPage]
         self.addToByteArray(RIDPhysicalPage, fourthIndex, RIDCounter)
+
         for i in range(numColumns - 4):
             attribute = columns[i]
             thirdIndex = i + 4
