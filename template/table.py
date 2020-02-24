@@ -1,5 +1,6 @@
 from template.page import *
 from template.index import *
+import os
 from time import time
 
 INDIRECTION_COLUMN = 0
@@ -23,6 +24,21 @@ class Table:
     :param key: int             #Index of table key in columns
     """
     def __init__(self, name, num_columns, key):
+        """
+        Create a folder with the name of the table in ECS165
+        """
+        path = 'ECS165/' + name
+
+        try:
+            os.mkdir(path)
+        except OSError:
+            print("creation of dir", path, "already exists")
+        else:
+            print("creation of dir ", path, "passed")
+
+        pass
+
+
         self.name = name
         self.key = key
         self.num_columns = num_columns
@@ -41,7 +57,7 @@ class Table:
         for column in range(num_columns):
             self.indexObjectToAdd = Index(self)
             self.listOfIndexObj.append(self.indexObjectToAdd)
-            
+
 
 
 

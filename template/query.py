@@ -1,6 +1,6 @@
 from template.table import Table, Record
 from template.index import Index
-
+import os
 
 class Query:
     """
@@ -10,6 +10,9 @@ class Query:
     def __init__(self, table):
         self.table = table
         self.numBinFiles = 1
+        self.chdirFlag = 0
+        self.chdirBaseFlag = 0
+        self.chdirTailFlag = 0
         pass
 
     """
@@ -94,16 +97,29 @@ class Query:
 
     def addToBinFiles(self, columns):
         # print("this function got called")
+
         if (self.table.RIDCounter % 2049 == 0):
             self.numBinFiles += 1
+
+
         nameOfFile = "pageRange" + str(self.numBinFiles) + ".bin"
-        f = open(nameOfFile, "wb")
+        f = open(nameOfFile, "ab")
 
         byteArrayToAdd = bytearray(4)
         for attribute in columns:
             byteArrayToAdd = (attribute).to_bytes(4, byteorder = 'big')
             f.write(byteArrayToAdd)
         f.close()
+        # f = open(nameOfFile, "rb")
+        # x = f.read()
+        #
+        # temp = bytearray(4)
+        # i = 0
+        # while (i < 4):
+        #     temp[i] = x[i]
+        #     i = i + 1
+        # print(int.from_bytes(temp, byteorder = 'big'))
+
 
 
 
@@ -114,8 +130,16 @@ class Query:
     """
 
     def insert(self, *columns):
-        f = open("plsOpen.bin", "wb")
         """ Add to bin files """
+        if (self.chdirBaseFlag == 0):
+            self.chdirBaseFlag = 1
+            path = 'ECS165/' + self.table.name + '/BaseRecords'
+            os.mkdir(path)
+
+        if (self.chdirFlag == 0):
+            os.chdir('ECS165/' + self.table.name + '/BaseRecords')
+            self.chdirFlag = 1
+
         self.addToBinFiles(columns)
 		#mapping will add to page_directory
 		# for example, adding RID = 0 will add
@@ -360,6 +384,16 @@ class Query:
     """
 
     def update(self, key, *columns): # 913151525, [None, 69 , None, None, None]
+        if (self.chdirTailFlag == 0):
+            path = 'ECS165/' + self.table.name + '/TailRecords'
+            os.mkdir(path)
+            self.chdirTailFlag = 1
+
+        if (self.chdirFlag == 0):
+            os.chdir(path)
+            self.chdirFlag = 1
+
+        self.addToBinFiles(columns)
         TIDCounter = self.table.TIDCounter
         self.mapTIDToIndices()
         self.table.keyToTID[key] = TIDCounter
