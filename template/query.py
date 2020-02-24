@@ -11,8 +11,6 @@ class Query:
         self.table = table
         self.numBinFiles = 1
         self.chdirFlag = 0
-        self.chdirBaseFlag = 0
-        self.chdirTailFlag = 0
         pass
 
     """
@@ -107,6 +105,8 @@ class Query:
 
         byteArrayToAdd = bytearray(4)
         for attribute in columns:
+            if (attribute == None):
+                attribute = 0
             byteArrayToAdd = (attribute).to_bytes(4, byteorder = 'big')
             f.write(byteArrayToAdd)
         f.close()
@@ -131,13 +131,9 @@ class Query:
 
     def insert(self, *columns):
         """ Add to bin files """
-        if (self.chdirBaseFlag == 0):
-            self.chdirBaseFlag = 1
-            path = 'ECS165/' + self.table.name + '/BaseRecords'
-            os.mkdir(path)
 
         if (self.chdirFlag == 0):
-            os.chdir('ECS165/' + self.table.name + '/BaseRecords')
+            os.chdir('ECS165/' + self.table.name)
             self.chdirFlag = 1
 
         self.addToBinFiles(columns)
@@ -384,16 +380,14 @@ class Query:
     """
 
     def update(self, key, *columns): # 913151525, [None, 69 , None, None, None]
-        if (self.chdirTailFlag == 0):
-            path = 'ECS165/' + self.table.name + '/TailRecords'
-            os.mkdir(path)
-            self.chdirTailFlag = 1
+        """ Add to bin files """
 
         if (self.chdirFlag == 0):
-            os.chdir(path)
+            os.chdir('ECS165/' + self.table.name)
             self.chdirFlag = 1
 
         self.addToBinFiles(columns)
+
         TIDCounter = self.table.TIDCounter
         self.mapTIDToIndices()
         self.table.keyToTID[key] = TIDCounter
