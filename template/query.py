@@ -15,8 +15,10 @@ class Query:
         self.bufferpoolSize = 0
         self.bufferpool = []
         self.BaseBufferpoolFiles = []
+        self.TailBufferpoolFiles = []
         self.numBaseBinFiles = 1
         self.numTailBinFiles = 1
+        self.globalTransactionsCount = 0
         pass
 
     """
@@ -164,9 +166,8 @@ class Query:
     # Insert a record with specified columns
     """
     def createBinFile(self):
-        print("RID: ", self.table.RIDCounter)
+        print("TID: ", self.table.RIDCounter)
         if (self.table.RIDCounter % 2048 == 1):
-            print("got here in createBinFile")
             return 1
         return 0
 
@@ -179,7 +180,8 @@ class Query:
     def recordsPageNotInPool(self):
         if (self.bufferpoolSize == 0):
             return 1
-        baseBinFileNeeded = self.table.RIDCounter // 2048 + 1
+        baseBinFileNeeded = self.table.RIDCounter // 2049  + 1
+        print("base bin file: ", baseBinFileNeeded)
         if (baseBinFileNeeded not in self.BaseBufferpoolFiles):
             return 1
         return 0
@@ -198,6 +200,8 @@ class Query:
         offset = (4 * self.table.num_columns) * (self.table.RIDCounter % 2048 - 1) * 8
         tempbytearray = bytearray(4)
         for attribute in contentsToAdd:
+            if (attribute == None):
+                continue
             # print("attribute: ", attribute)
             tempbytearray = attribute.to_bytes(4, byteorder = 'big')
             # print("HI HELLO WTF")
@@ -213,6 +217,7 @@ class Query:
 
 
     def insert(self, *columns):
+        self.globalTransactionsCount += 1
         """ Add to bin files """
         if (self.chdirFlag == 0):
             os.chdir('ECS165/' + self.table.name)
@@ -222,20 +227,29 @@ class Query:
         if (self.createBinFile()):
             file = self.makeNewBinFile()
             self.numBaseBinFiles += 1
-        baseFileAdded = self.table.RIDCounter // 2048 + 1
+        baseFileAdded = self.table.RIDCounter // 2049 + 1
 
         bufferpoolObj = None
         if (self.recordsPageNotInPool()):
             # add empty bufferpool object to bufferpool
             bufferPoolObjToAdd = BufferPool(self.table.num_columns)
-            self.bufferpool.append(bufferPoolObjToAdd)
-            self.makeCopyOfBinFileInPool(bufferPoolObjToAdd)
-            bufferpoolObj = bufferPoolObjToAdd
+            bufferPoolObjToAdd.numTransactions = self.globalTransactionsCount
 
-            self.BaseBufferpoolFiles.append(baseFileAdded)
-            self.bufferpoolSize += 1
+            if (self.bufferpoolSize != 5):
+                self.bufferpool.append(bufferPoolObjToAdd)
+                self.makeCopyOfBinFileInPool(bufferPoolObjToAdd)
+                bufferpoolObj = bufferPoolObjToAdd
+                self.BaseBufferpoolFiles.append(baseFileAdded)
+                self.bufferpoolSize += 1
+            else:
+                leastRecentlyUsed = bufferpool[0].numTransactions
+                indexOfLeastRecentlyUsed = 0
+                for bufferpoolObject in self.bufferpool:
+                    if (bufferpoolObject.numTransactions < leastRecentlyUsed):
+                        leastRecentlyUsed = bufferpoolObject.numTransactions
+                        indexOfLeastRecentlyUsed = self.bufferpool.index(bufferpoolObj)
+                # evict page here
         else:
-            # print("got here 2")
             index = self.BaseBufferpoolFiles.index(baseFileAdded)
             bufferpoolObj = self.bufferpool[index]
 
@@ -243,7 +257,7 @@ class Query:
         self.addRecordTocopy(columns, bufferpoolObj)
 
 
-        
+
 		#mapping will add to page_directory
 		# for example, adding RID = 0 will add
 		# page_directory = { 0: [0, 0, 0, 0] }
@@ -482,12 +496,68 @@ class Query:
             j = j + 1
 
 
+    def createTailBinFile(self):
+        # print("TID: ", self.table.TIDCounter)
+        if ((self.table.TIDCounter % 2048 + 2) % 2048 == 1):
+            print("got here in createTailBinFile")
+            return 1
+        return 0
+
+    def makeNewTailBinFile(self):
+        nameOfFile = "tailPageRange" + str(self.numTailBinFiles) + ".bin"
+        # print("making new bin file: ", nameOfFile)
+        f = open(nameOfFile, "ab")
+        return f
+
+    def tailrecordsPageNotInPool(self):
+        if (self.bufferpoolSize == 0):
+            return 1
+        tailBinFileNeeded = ( (2**31)- self.table.TIDCounter - 1)  // 2048
+        # print("tail bin file: ", tailBinFileNeeded)
+
+        if (tailBinFileNeeded not in self.TailBufferpoolFiles):
+            print("returning 1")
+            return 1
+        print("returning 0")
+        return 0
+
     """
     # Update a record with specified key and columns
     """
 
     def update(self, key, *columns): # 913151525, [None, 69 , None, None, None]
-        """ Add to bin files """
+        # """ Add to bin files """
+
+        file = None
+        print("TID: ", self.table.TIDCounter)
+
+        if (self.createTailBinFile()):
+            file = self.makeNewTailBinFile()
+            self.numTailBinFiles += 1
+        tailFileAdded = ( (2**31)- self.table.TIDCounter - 1)  // 2048
+
+        bufferpoolObj = None
+        if (self.tailrecordsPageNotInPool()):
+            # add empty bufferpool object to bufferpool
+            bufferPoolObjToAdd = BufferPool(self.table.num_columns)
+            bufferPoolObjToAdd.numTransactions = self.globalTransactionsCount
+
+            self.bufferpool.append(bufferPoolObjToAdd)
+            self.makeCopyOfBinFileInPool(bufferPoolObjToAdd)
+            bufferpoolObj = bufferPoolObjToAdd
+
+            self.TailBufferpoolFiles.append(tailFileAdded)
+            self.bufferpoolSize += 1
+        else:
+            # print("got here 2")
+            index = self.TailBufferpoolFiles.index(tailFileAdded)
+            bufferpoolObj = self.bufferpool[index]
+
+        # print("bufferpoolObj: ", bufferpoolObj.contents)
+        self.addRecordTocopy(columns, bufferpoolObj)
+
+
+
 
         TIDCounter = self.table.TIDCounter
         self.mapTIDToIndices()

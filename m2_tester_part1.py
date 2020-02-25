@@ -11,29 +11,53 @@ query = Query(grades_table)
 
 records = {}
 seed(3562901)
-for i in range(0, 10000):
+for i in range(1, 6146):
     key = 92106429 + i
     records[key] = [key, randint(0, 20), randint(0, 20), randint(0, 20), randint(0, 20)]
     query.insert(*records[key])
 keys = sorted(list(records.keys()))
 print("Insert finished")
 
-for key in keys:
-    record = query.select(key, 0, [1, 1, 1, 1, 1])[0]
-    error = False
-    for i, column in enumerate(record.columns):
-        if column != records[key][i]:
-            error = True
-    if error:
-        print('select error on', key, ':', record, ', correct:', records[key])
-    else:
-        print('select on', key, ':', record.columns)
-print("Select finished")
+# print("bufferpool[1]: ", query.bufferpool[1].contents)
 
-for _ in range(1):
-    for key in keys:
-        updated_columns = [None, None, None, None, None]
-        for i in range(1, grades_table.num_columns):
+# i = 0
+# x = 0
+# tempByteArray = bytearray(4)
+# while(x < 32):
+#     # print("x: ", x)
+#     while(i < 4):
+#         # print("i: ", i)
+#         tempByteArray[i] = query.bufferpool[0].contents[x]
+#         i = i + 1
+#         x = x + 1
+#     # x += 4
+#     i = 0
+#     # print("printing")
+#     print(int.from_bytes(tempByteArray, byteorder = 'big'))
+#     tempByteArray = bytearray(4)
+# print("printing")
+# print(int.from_bytes(tempByteArray, byteorder = 'big'))
+
+
+# for key in keys:
+#     record = query.select(key, 0, [1, 1, 1, 1, 1])[0]
+#     error = False
+#     for i, column in enumerate(record.columns):
+#         if column != records[key][i]:
+#             error = True
+#     if error:
+#         print('select error on', key, ':', record, ', correct:', records[key])
+#     else:
+#         print('select on', key, ':', record.columns)
+# print("Select finished")
+#
+#
+numUpdates = 1
+for key in keys:
+    updated_columns = [None, None, None, None, None]
+    for i in range(1, grades_table.num_columns):
+        if numUpdates != 2050:
+            numUpdates += 1
             value = randint(0, 20)
             updated_columns[i] = value
             original = records[key].copy()
@@ -46,18 +70,19 @@ for _ in range(1):
                     error = True
             if error:
                 print('update error on', original, 'and', updated_columns, ':', record, ', correct:', records[key])
-            else:
-                print('update on', original, 'and', updated_columns, ':', record.columns)
-            updated_columns[i] = None
+        else:
+            break
+        #     print('update on', original, 'and', updated_columns, ':', record.columns)
+        updated_columns[i] = None
 print("Update finished")
 
-for i in range(0, 100):
-    r = sorted(sample(range(0, len(keys)), 2))
-    column_sum = sum(map(lambda key: records[key][0], keys[r[0]: r[1] + 1]))
-    result = query.sum(keys[r[0]], keys[r[1]], 0)
-    if column_sum != result:
-        print('sum error on [', keys[r[0]], ',', keys[r[1]], ']: ', result, ', correct: ', column_sum)
-    # else:
-    #     print('sum on [', keys[r[0]], ',', keys[r[1]], ']: ', column_sum)
-print("Aggregate finished")
+# for i in range(0, 100):
+#     r = sorted(sample(range(0, len(keys)), 2))
+#     column_sum = sum(map(lambda key: records[key][0], keys[r[0]: r[1] + 1]))
+#     result = query.sum(keys[r[0]], keys[r[1]], 0)
+#     if column_sum != result:
+#         print('sum error on [', keys[r[0]], ',', keys[r[1]], ']: ', result, ', correct: ', column_sum)
+#     # else:
+#     #     print('sum on [', keys[r[0]], ',', keys[r[1]], ']: ', column_sum)
+# print("Aggregate finished")
 db.close()
