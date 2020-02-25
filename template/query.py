@@ -1,5 +1,7 @@
 from template.table import Table, Record
 from template.index import Index
+from template.db import Database
+from template.bufferpool import BufferPool
 import os
 
 class Query:
@@ -9,8 +11,12 @@ class Query:
 
     def __init__(self, table):
         self.table = table
-        self.numBinFiles = 1
         self.chdirFlag = 0
+        self.bufferpoolSize = 0
+        self.bufferpool = []
+        self.BaseBufferpoolFiles = []
+        self.numBaseBinFiles = 1
+        self.numTailBinFiles = 1
         pass
 
     """
@@ -93,14 +99,42 @@ class Query:
                 dictionaryOfIndex[attribute].append(RID)
 
 
-    def addToBinFiles(self, columns):
+    def addToBaseBinFiles(self, columns):
         # print("this function got called")
 
-        if (self.table.RIDCounter % 2049 == 0):
-            self.numBinFiles += 1
+        # if (self.table.RIDCounter % 2049 == 0):
+        #     self.numBaseBinFiles += 1
+        #
+        #
+        # nameOfFile = "basePageRange" + str(self.numBaseBinFiles) + ".bin"
+        # f = open(nameOfFile, "ab")
+        #
+        # byteArrayToAdd = bytearray(4)
+        # for attribute in columns:
+        #     if (attribute == None):
+        #         attribute = 0
+        #     byteArrayToAdd = (attribute).to_bytes(4, byteorder = 'big')
+        #     f.write(byteArrayToAdd)
+        # f.close()
+        # f = open(nameOfFile, "rb")
+        # x = f.read()
+        #
+        # temp = bytearray(4)
+        # i = 0
+        # while (i < 4):
+        #     temp[i] = x[i]
+        #     i = i + 1
+        # print(int.from_bytes(temp, byteorder = 'big'))
+        pass
+
+    def addToTailBinFiles(self, columns):
+        # print("this function got called")
+
+        if (self.table.TIDCounter % 2049 == 0):
+            self.numTailBinFiles += 1
 
 
-        nameOfFile = "pageRange" + str(self.numBinFiles) + ".bin"
+        nameOfFile = "tailPageRange" + str(self.numTailBinFiles) + ".bin"
         f = open(nameOfFile, "ab")
 
         byteArrayToAdd = bytearray(4)
@@ -125,18 +159,91 @@ class Query:
 
 
 
+
     """
     # Insert a record with specified columns
     """
+    def createBinFile(self):
+        print("RID: ", self.table.RIDCounter)
+        if (self.table.RIDCounter % 2048 == 1):
+            print("got here in createBinFile")
+            return 1
+        return 0
+
+    def makeNewBinFile(self):
+        nameOfFile = "basePageRange" + str(self.numBaseBinFiles) + ".bin"
+        print("making new bin file: ", nameOfFile)
+        f = open(nameOfFile, "ab")
+        return f
+
+    def recordsPageNotInPool(self):
+        if (self.bufferpoolSize == 0):
+            return 1
+        baseBinFileNeeded = self.table.RIDCounter // 2048 + 1
+        if (baseBinFileNeeded not in self.BaseBufferpoolFiles):
+            return 1
+        return 0
+
+    def makeCopyOfBinFileInPool(self, bufferpoolObj):
+        fileToCopy = "basePageRange" + str(self.table.RIDCounter // 2049 + 1) + ".bin"
+        with open(fileToCopy, "rb") as binaryfile :
+            bufferpoolObj.contents = bytearray(binaryfile.read())
+
+
+    def addRecordTocopy(self, columns, copy):
+        metadata = (0, 0, 0)
+        contentsToAdd = metadata + columns
+        # contentsToAdd = columns
+
+        offset = (4 * self.table.num_columns) * (self.table.RIDCounter % 2048 - 1) * 8
+        tempbytearray = bytearray(4)
+        for attribute in contentsToAdd:
+            # print("attribute: ", attribute)
+            tempbytearray = attribute.to_bytes(4, byteorder = 'big')
+            # print("HI HELLO WTF")
+            # print("offset: ", offset, " j: ", j)
+            # copy.contents[offset] = tempbytearray[j]
+            copy.contents = copy.contents + tempbytearray
+            # offset += 1
+
+
+
+
+
+
 
     def insert(self, *columns):
         """ Add to bin files """
-
         if (self.chdirFlag == 0):
             os.chdir('ECS165/' + self.table.name)
             self.chdirFlag = 1
 
-        self.addToBinFiles(columns)
+        file = None
+        if (self.createBinFile()):
+            file = self.makeNewBinFile()
+            self.numBaseBinFiles += 1
+        baseFileAdded = self.table.RIDCounter // 2048 + 1
+
+        bufferpoolObj = None
+        if (self.recordsPageNotInPool()):
+            # add empty bufferpool object to bufferpool
+            bufferPoolObjToAdd = BufferPool(self.table.num_columns)
+            self.bufferpool.append(bufferPoolObjToAdd)
+            self.makeCopyOfBinFileInPool(bufferPoolObjToAdd)
+            bufferpoolObj = bufferPoolObjToAdd
+
+            self.BaseBufferpoolFiles.append(baseFileAdded)
+            self.bufferpoolSize += 1
+        else:
+            # print("got here 2")
+            index = self.BaseBufferpoolFiles.index(baseFileAdded)
+            bufferpoolObj = self.bufferpool[index]
+
+        # print("bufferpoolObj: ", bufferpoolObj.contents)
+        self.addRecordTocopy(columns, bufferpoolObj)
+
+
+        
 		#mapping will add to page_directory
 		# for example, adding RID = 0 will add
 		# page_directory = { 0: [0, 0, 0, 0] }
@@ -381,12 +488,6 @@ class Query:
 
     def update(self, key, *columns): # 913151525, [None, 69 , None, None, None]
         """ Add to bin files """
-
-        if (self.chdirFlag == 0):
-            os.chdir('ECS165/' + self.table.name)
-            self.chdirFlag = 1
-
-        self.addToBinFiles(columns)
 
         TIDCounter = self.table.TIDCounter
         self.mapTIDToIndices()

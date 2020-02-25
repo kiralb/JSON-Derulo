@@ -1,5 +1,6 @@
 from template.table import Table
 import os
+import pickle
 
 class Database():
 
@@ -32,16 +33,17 @@ class Database():
 
     """
     def close(self):
-        pass
+        globalPath = "/Users/BrianNguyen/Documents/GitHub/JSON-Derulo/ECS165/"
+        for i in range(len(self.tables)):
+            path = self.tables[i].name + ".pkl"
+            f = open(globalPath + path, "wb")
+            pickle.dump(self.tables[i] , f)
+            f.close()
 
-    """
-    # Creates a new table
-    :param name: string         #Table name
-    :param num_columns: int     #Number of Columns: all columns are integer
-    :param key: int             #Index of table key in columns
-    """
+
     def create_table(self, name, num_columns, key):
         table = Table(name, num_columns, key)
+        self.tables.append(table)
         return table
 
     """
@@ -54,4 +56,12 @@ class Database():
     # Returns table with the passed name
     """
     def get_table(self, name):
-        pass
+        globalPath = "/Users/as/Documents/ecs165a/milestone1/JSON-Derulo/ECS165/"
+        path = name + ".pkl"
+        print(path)
+        f = open(globalPath + path, "rb")
+        dict_x = pickle.load(f)
+        print(dict_x)
+        print(dict_x.num_columns)
+        # print ("key {}, value {} ". format(0,  dict_x[0]))
+        f.close()
