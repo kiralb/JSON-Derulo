@@ -165,14 +165,14 @@ class Query:
     # Insert a record with specified columns
     """
     def createBinFile(self):
-        print("RID: ", self.table.RIDCounter)
+        # print("RID: ", self.table.RIDCounter)
         if (self.table.RIDCounter % 2048 == 1):
             return 1
         return 0
 
     def makeNewBinFile(self):
         nameOfFile = "basePageRange" + str(self.numBaseBinFiles) + ".bin"
-        print("making new bin file: ", nameOfFile)
+        # print("making new bin file: ", nameOfFile)
         f = open(nameOfFile, "ab")
         return f
 
@@ -180,7 +180,7 @@ class Query:
         if (self.bufferpoolSize == 0):
             return 1
         baseBinFileNeeded = "basePageRange" + str(((self.table.RIDCounter - 1)// 2048) + 1) + ".bin"
-        print("base bin file: ", baseBinFileNeeded)
+        # print("base bin file: ", baseBinFileNeeded)
         if (baseBinFileNeeded not in self.BufferpoolFiles):
             return 1
         return 0
@@ -192,11 +192,9 @@ class Query:
 
 
     def addRecordTocopy(self, columns, copy):
-        metadata = (0, 0, 0)
-        contentsToAdd = metadata + columns
+        contentsToAdd = columns
         # contentsToAdd = columns
 
-        offset = (4 * self.table.num_columns) * (self.table.RIDCounter % 2048 - 1) * 8
         tempbytearray = bytearray(4)
         for attribute in contentsToAdd:
             if (attribute == None):
@@ -211,15 +209,20 @@ class Query:
 
 
     def evictPage(self, indexOfPageToEvict):
+
         pass
 
 
 
 
 
-
-
     def insert(self, *columns):
+        # student ID matching with the RID
+        key = columns[0]
+        self.table.keyToRID[key] = self.table.RIDCounter
+
+        """ START of Durable Implentation """
+
         self.globalTransactionsCount += 1
         """ Add to bin files """
         if (self.chdirFlag == 0):
@@ -237,15 +240,16 @@ class Query:
         bufferpoolObj = None
         if (self.recordsPageNotInPool()):
             # add empty bufferpool object to bufferpool
-            bufferPoolObjToAdd = BufferPool(self.table.num_columns)
-            bufferPoolObjToAdd.numTransactions = self.globalTransactionsCount
+            bufferpoolObj = BufferPool(self.table.num_columns)
+            bufferpoolObj.pin = 1
+            bufferpoolObj.numTransactions = self.globalTransactionsCount
 
             #if bufferpool not full, just add page from disk to bufferpool
             if (self.bufferpoolSize != 5):
 
-                self.bufferpool.append(bufferPoolObjToAdd)
-                self.makeCopyOfBinFileInPool(bufferPoolObjToAdd)
-                bufferpoolObj = bufferPoolObjToAdd
+                self.bufferpool.append(bufferpoolObj)
+                self.makeCopyOfBinFileInPool(bufferpoolObj)
+                # bufferpoolObj = bufferPoolObjToAdd
                 self.BufferpoolFiles.append(baseFileAdded)
                 self.bufferpoolSize += 1
             # if it is full, need to evict a page using LRU
@@ -265,7 +269,20 @@ class Query:
 
         # print("bufferpoolObj: ", bufferpoolObj.contents)
         self.addRecordTocopy(columns, bufferpoolObj)
+        bufferpoolObj.dirty = 1
+        bufferpoolObj.pin = 0
 
+        # mapping base RID to what file it can be found in and at what offset in that file
+        offset = 4 * self.table.num_columns * (self.table.RIDCounter - 1)
+        self.table.baseRecordDirectory[self.table.RIDCounter] = [baseFileAdded, offset]
+
+        # initialize metadata columns
+        self.table.baseMetaData[0][self.table.RIDCounter] = 0 # map all RIDs indirection to 0
+        self.table.baseMetaData[1][self.table.RIDCounter] = '0' * self.table.num_columns # map all RIDs schema to 0
+
+
+
+        """ END of Durable Implentation """
 
 
 		#mapping will add to page_directory
@@ -277,8 +294,6 @@ class Query:
         RIDCounter = self.table.RIDCounter
         self.insertIntoIndexObjects(columns)
         key = columns[0]
-        # student ID matching with the RID
-        self.table.keyToRID[key] = RIDCounter
         numColumns = self.table.num_columns + 4
         firstIndex = self.table.page_directory[RIDCounter][0]
         secondIndex = self.table.page_directory[RIDCounter][1]
@@ -509,7 +524,7 @@ class Query:
     def createTailBinFile(self):
         # print("TID: ", self.table.TIDCounter)
         if ((self.table.TIDCounter % 2048 + 2) % 2048 == 1):
-            print("got here in createTailBinFile")
+            # print("got here in createTailBinFile")
             return 1
         return 0
 
@@ -525,23 +540,77 @@ class Query:
         tailBinFileNeeded = "tailPageRange" + str(( (2**31)- self.table.TIDCounter - 1)  // 2048 + 1) + ".bin"
 
 
-        print("tail bin file: ", tailBinFileNeeded)
+        # print("tail bin file: ", tailBinFileNeeded)
 
         if (tailBinFileNeeded not in self.BufferpoolFiles):
-            print("returning 1")
+            # print("returning 1")
             return 1
-        print("returning 0")
+        # print("returning 0")
         return 0
+
+
+    def assignTailIndirection(self, key):
+        RID = self.table.keyToRID[key]
+        indirColOfRID = self.table.baseMetaData[0][RID]
+
+
+        # sets current base record's indirection column equal to the TID of the latest tail record
+        self.table.baseMetaData[0][RID] = self.table.TIDCounter
+        if (indirColOfRID == 0):
+            # if base record hasn't been updated, just return RID
+            return RID
+        else:
+            # if it has been updated, return previous TID
+            return indirColOfRID
+
+    def assignTailSchema(self, columns):
+        schemaString = ""
+        for i in range(len(columns)):
+            if (columns[i] == None):
+                schemaString += "0"
+            else:
+                schemaString += "1"
+        return schemaString
+
+    def assignTailMetaData(self, key, columns):
+        indirection = self.assignTailIndirection(key)
+        schema = self.assignTailSchema(columns)
+        self.table.tailMetaData[0][self.table.TIDCounter] = indirection
+        print("SCHEMA IS: ", schema)
+        self.table.tailMetaData[1][self.table.TIDCounter] = schema
+
+
+
+
+
+    def addTailRecordTocopy(self, key, columns, copy):
+        self.assignTailMetaData(key, columns)
+        contentsToAdd = columns
+        # contentsToAdd = columns
+
+        # offset = (4 * self.table.num_columns) * (self.table.RIDCounter % 2048 - 1) * 8
+        tempbytearray = bytearray(4)
+        for attribute in contentsToAdd:
+            if (attribute == None):
+                continue
+            # print("attribute: ", attribute)
+            tempbytearray = attribute.to_bytes(4, byteorder = 'big')
+            # print("HI HELLO WTF")
+            # print("offset: ", offset, " j: ", j)
+            # copy.contents[offset] = tempbytearray[j]
+            copy.contents = copy.contents + tempbytearray
+            # offset += 1
 
     """
     # Update a record with specified key and columns
     """
 
     def update(self, key, *columns): # 913151525, [None, 69 , None, None, None]
-        # """ Add to bin files """
+        self.table.keyToTID[key] = self.table.TIDCounter
+        """ START Durable implementation """
 
         file = None
-        print("TID: ", self.table.TIDCounter)
+        # print("TID: ", self.table.TIDCounter)
 
         if (self.createTailBinFile()):
             file = self.makeNewTailBinFile()
@@ -551,12 +620,13 @@ class Query:
         bufferpoolObj = None
         if (self.tailrecordsPageNotInPool()):
             # add empty bufferpool object to bufferpool
-            bufferPoolObjToAdd = BufferPool(self.table.num_columns)
-            bufferPoolObjToAdd.numTransactions = self.globalTransactionsCount
+            bufferpoolObj = BufferPool(self.table.num_columns)
+            bufferpoolObj.pin = 1
+            bufferpoolObj.numTransactions = self.globalTransactionsCount
 
-            self.bufferpool.append(bufferPoolObjToAdd)
-            self.makeCopyOfBinFileInPool(bufferPoolObjToAdd)
-            bufferpoolObj = bufferPoolObjToAdd
+            self.bufferpool.append(bufferpoolObj)
+            self.makeCopyOfBinFileInPool(bufferpoolObj)
+            # bufferpoolObj = bufferPoolObjToAdd
 
             self.BufferpoolFiles.append(tailFileAdded)
             self.bufferpoolSize += 1
@@ -566,14 +636,15 @@ class Query:
             bufferpoolObj = self.bufferpool[index]
 
         # print("bufferpoolObj: ", bufferpoolObj.contents)
-        self.addRecordTocopy(columns, bufferpoolObj)
+        self.addTailRecordTocopy(key, columns, bufferpoolObj)
+        bufferpoolObj.pin = 0
 
+        """ END Durable implementation """
 
 
 
         TIDCounter = self.table.TIDCounter
         self.mapTIDToIndices()
-        self.table.keyToTID[key] = TIDCounter
 #        print(TIDCounter)
         numColumns = self.table.num_columns + 4
         firstIndex = self.table.page_directory2[TIDCounter][0]

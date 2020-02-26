@@ -50,7 +50,7 @@ class Table:
         self.keyToRID = {}
         self.keyToTID = {}
 
-
+        """ START Milestone2 Stuff """
 
         # holds an index object for each column in base pages
         self.listOfIndexObj = []
@@ -58,8 +58,14 @@ class Table:
             self.indexObjectToAdd = Index(self)
             self.listOfIndexObj.append(self.indexObjectToAdd)
 
+        self.baseRecordDirectory = {}
+
+        self.baseMetaData = [{}, {}] # first dictionary holds base record's key to its indirection. Second holds key to schema
+        self.tailMetaData = [{}, {}]
 
 
+
+        """ END Milestone2 Stuff """
 
 
         self.pageRangeArray = [] #for base records
