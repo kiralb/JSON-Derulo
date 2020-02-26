@@ -179,14 +179,14 @@ class Query:
     def recordsPageNotInPool(self):
         if (self.bufferpoolSize == 0):
             return 1
-        baseBinFileNeeded = "basePageRange" + str(self.table.RIDCounter // 2049  + 1) + ".bin"
+        baseBinFileNeeded = "basePageRange" + str(((self.table.RIDCounter - 1)// 2048) + 1) + ".bin"
         print("base bin file: ", baseBinFileNeeded)
         if (baseBinFileNeeded not in self.BufferpoolFiles):
             return 1
         return 0
 
     def makeCopyOfBinFileInPool(self, bufferpoolObj):
-        fileToCopy = "basePageRange" + str(self.table.RIDCounter // 2049 + 1) + ".bin"
+        fileToCopy = "basePageRange" + str(((self.table.RIDCounter - 1)// 2048) + 1) + ".bin"
         with open(fileToCopy, "rb") as binaryfile :
             bufferpoolObj.contents = bytearray(binaryfile.read())
 
@@ -230,7 +230,9 @@ class Query:
         if (self.createBinFile()):
             file = self.makeNewBinFile()
             self.numBaseBinFiles += 1
-        baseFileAdded = "basePageRange" + str(self.table.RIDCounter // 2049 + 1) + ".bin"
+
+
+        baseFileAdded = "basePageRange" + str(((self.table.RIDCounter - 1)// 2048) + 1) + ".bin"
 
         bufferpoolObj = None
         if (self.recordsPageNotInPool()):
