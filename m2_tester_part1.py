@@ -17,6 +17,7 @@ for i in range(1, 6146):
     query.insert(*records[key])
 keys = sorted(list(records.keys()))
 print("Insert finished")
+print("how many times do we add a page:", query.howManyIfs)
 
 # print("bufferpool[1]: ", query.bufferpool[1].contents)
 
@@ -51,30 +52,31 @@ print("Insert finished")
 #         print('select on', key, ':', record.columns)
 # print("Select finished")
 #
-#
-numUpdates = 1
-for key in keys:
-    updated_columns = [None, None, None, None, None]
-    for i in range(1, grades_table.num_columns):
-        if numUpdates != 2050:
-            numUpdates += 1
-            value = randint(0, 20)
-            updated_columns[i] = value
-            original = records[key].copy()
-            records[key][i] = value
-            query.update(key, *updated_columns)
-            record = query.select(key, 0, [1, 1, 1, 1, 1])[0]
-            error = False
-            for j, column in enumerate(record.columns):
-                if column != records[key][j]:
-                    error = True
-            if error:
-                print('update error on', original, 'and', updated_columns, ':', record, ', correct:', records[key])
-        else:
-            break
-        #     print('update on', original, 'and', updated_columns, ':', record.columns)
-        updated_columns[i] = None
-print("Update finished")
+# #
+# numUpdates = 1
+# for key in keys:
+#     updated_columns = [None, None, None, None, None]
+#     for i in range(1, grades_table.num_columns):
+#         if numUpdates != 2050:
+#             numUpdates += 1
+#             value = randint(0, 20)
+#             updated_columns[i] = value
+#             original = records[key].copy()
+#             records[key][i] = value
+#             query.update(key, *updated_columns)
+#             record = query.select(key, 0, [1, 1, 1, 1, 1])[0]
+#             error = False
+#             for j, column in enumerate(record.columns):
+#                 if column != records[key][j]:
+#                     error = True
+#             if error:
+#                 print('update error on', original, 'and', updated_columns, ':', record, ', correct:', records[key])
+#         else:
+#             break
+#         #     print('update on', original, 'and', updated_columns, ':', record.columns)
+#         updated_columns[i] = None
+# print("Update finished")
+print("printing bufferpool: ", query.BufferpoolFiles)
 
 # for i in range(0, 100):
 #     r = sorted(sample(range(0, len(keys)), 2))

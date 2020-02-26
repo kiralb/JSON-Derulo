@@ -14,8 +14,7 @@ class Query:
         self.chdirFlag = 0
         self.bufferpoolSize = 0
         self.bufferpool = []
-        self.BaseBufferpoolFiles = []
-        self.TailBufferpoolFiles = []
+        self.BufferpoolFiles = []
         self.numBaseBinFiles = 1
         self.numTailBinFiles = 1
         self.globalTransactionsCount = 0
@@ -166,7 +165,7 @@ class Query:
     # Insert a record with specified columns
     """
     def createBinFile(self):
-        print("TID: ", self.table.RIDCounter)
+        print("RID: ", self.table.RIDCounter)
         if (self.table.RIDCounter % 2048 == 1):
             return 1
         return 0
@@ -180,9 +179,9 @@ class Query:
     def recordsPageNotInPool(self):
         if (self.bufferpoolSize == 0):
             return 1
-        baseBinFileNeeded = self.table.RIDCounter // 2049  + 1
+        baseBinFileNeeded = "basePageRange" + str(self.table.RIDCounter // 2049  + 1) + ".bin"
         print("base bin file: ", baseBinFileNeeded)
-        if (baseBinFileNeeded not in self.BaseBufferpoolFiles):
+        if (baseBinFileNeeded not in self.BufferpoolFiles):
             return 1
         return 0
 
@@ -211,6 +210,10 @@ class Query:
             # offset += 1
 
 
+    def evictPage(self, indexOfPageToEvict):
+        pass
+
+
 
 
 
@@ -227,7 +230,7 @@ class Query:
         if (self.createBinFile()):
             file = self.makeNewBinFile()
             self.numBaseBinFiles += 1
-        baseFileAdded = self.table.RIDCounter // 2049 + 1
+        baseFileAdded = "basePageRange" + str(self.table.RIDCounter // 2049 + 1) + ".bin"
 
         bufferpoolObj = None
         if (self.recordsPageNotInPool()):
@@ -235,12 +238,15 @@ class Query:
             bufferPoolObjToAdd = BufferPool(self.table.num_columns)
             bufferPoolObjToAdd.numTransactions = self.globalTransactionsCount
 
+            #if bufferpool not full, just add page from disk to bufferpool
             if (self.bufferpoolSize != 5):
+
                 self.bufferpool.append(bufferPoolObjToAdd)
                 self.makeCopyOfBinFileInPool(bufferPoolObjToAdd)
                 bufferpoolObj = bufferPoolObjToAdd
-                self.BaseBufferpoolFiles.append(baseFileAdded)
+                self.BufferpoolFiles.append(baseFileAdded)
                 self.bufferpoolSize += 1
+            # if it is full, need to evict a page using LRU
             else:
                 leastRecentlyUsed = bufferpool[0].numTransactions
                 indexOfLeastRecentlyUsed = 0
@@ -248,9 +254,11 @@ class Query:
                     if (bufferpoolObject.numTransactions < leastRecentlyUsed):
                         leastRecentlyUsed = bufferpoolObject.numTransactions
                         indexOfLeastRecentlyUsed = self.bufferpool.index(bufferpoolObj)
+
                 # evict page here
+                self.evictPage(indexOfLeastRecentlyUsed)
         else:
-            index = self.BaseBufferpoolFiles.index(baseFileAdded)
+            index = self.BufferpoolFiles.index(baseFileAdded)
             bufferpoolObj = self.bufferpool[index]
 
         # print("bufferpoolObj: ", bufferpoolObj.contents)
@@ -512,10 +520,12 @@ class Query:
     def tailrecordsPageNotInPool(self):
         if (self.bufferpoolSize == 0):
             return 1
-        tailBinFileNeeded = ( (2**31)- self.table.TIDCounter - 1)  // 2048
-        # print("tail bin file: ", tailBinFileNeeded)
+        tailBinFileNeeded = "tailPageRange" + str(( (2**31)- self.table.TIDCounter - 1)  // 2048 + 1) + ".bin"
 
-        if (tailBinFileNeeded not in self.TailBufferpoolFiles):
+
+        print("tail bin file: ", tailBinFileNeeded)
+
+        if (tailBinFileNeeded not in self.BufferpoolFiles):
             print("returning 1")
             return 1
         print("returning 0")
@@ -534,7 +544,7 @@ class Query:
         if (self.createTailBinFile()):
             file = self.makeNewTailBinFile()
             self.numTailBinFiles += 1
-        tailFileAdded = ( (2**31)- self.table.TIDCounter - 1)  // 2048
+        tailFileAdded = "tailPageRange" + str(((2**31)- self.table.TIDCounter - 1)  // 2048 + 1) + ".bin"
 
         bufferpoolObj = None
         if (self.tailrecordsPageNotInPool()):
@@ -546,11 +556,11 @@ class Query:
             self.makeCopyOfBinFileInPool(bufferPoolObjToAdd)
             bufferpoolObj = bufferPoolObjToAdd
 
-            self.TailBufferpoolFiles.append(tailFileAdded)
+            self.BufferpoolFiles.append(tailFileAdded)
             self.bufferpoolSize += 1
         else:
             # print("got here 2")
-            index = self.TailBufferpoolFiles.index(tailFileAdded)
+            index = self.BufferpoolFiles.index(tailFileAdded)
             bufferpoolObj = self.bufferpool[index]
 
         # print("bufferpoolObj: ", bufferpoolObj.contents)
