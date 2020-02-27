@@ -163,38 +163,43 @@ class Query:
         f.close()
 
 
-        FilesArray[x].contents = bytearray(readingByteArray)
+        self.bufferpool[x].contents = bytearray(readingByteArray)
         FileNamesArray[x] = nameOfReplacementFileByteArray
 
     def bringToBufferpool(self, bufferpoolObj, fileToAdd):
         #if bufferpool not full, just add page from disk to bufferpool
         if (self.bufferpoolSize != 5):
+            # print("globalTransactionsCount: ", self.globalTransactionsCount)
             self.bufferpool.append(bufferpoolObj)
             self.makeCopyOfBinFileInPool(bufferpoolObj)
             # bufferpoolObj = bufferPoolObjToAdd
             self.BufferpoolFiles.append(fileToAdd)
             self.bufferpoolSize += 1
             # print("files: ", self.BufferpoolFiles)
+            return self.bufferpoolSize - 1
         # if it is full, need to evict a page using LRU
         else:
             leastRecentlyUsed = self.bufferpool[0].numTransactions
             indexOfLeastRecentlyUsed = 0
             for index, bufferpoolObject in enumerate(self.bufferpool):
                 # print("LRU: ", leastRecentlyUsed, " index: ", index)
-                if (bufferpoolObject.numTransactions < leastRecentlyUsed):
+                if (self.bufferpool[index].numTransactions < leastRecentlyUsed):
                     leastRecentlyUsed = bufferpoolObject.numTransactions
                     indexOfLeastRecentlyUsed = index
-
             # evict page here
+
             filesArray = self.bufferpool
             fileNamesArray = self.BufferpoolFiles
             fileToGetEvictedByteArray = self.bufferpool[indexOfLeastRecentlyUsed].contents
             nameOfFileOfEvicted = self.BufferpoolFiles[indexOfLeastRecentlyUsed]
             nameOfReplacementFileByteArray = fileToAdd
 
+            # print("1: " , self.bufferpool[4].numTransactions)
+
             self.evictPage(indexOfLeastRecentlyUsed, filesArray,
                 fileNamesArray, fileToGetEvictedByteArray, nameOfFileOfEvicted,
                 nameOfReplacementFileByteArray )
+            # print("2: " ,self.bufferpool[4].numTransactions)
 
             #I'm trying to see if i can access and traverse through the
             #bytearray that was replaced due to eviction
@@ -203,7 +208,7 @@ class Query:
 
             """ SUS 2 """
             # bufferpoolObj = self.bufferpool[indexOfLeastRecentlyUsed]
-            # bufferpoolObj.numTransactions = self.globalTransactionsCount
+            # self.bufferpool[index].numTransactions = self.globalTransactionsCount
             return indexOfLeastRecentlyUsed
 
 
@@ -235,12 +240,17 @@ class Query:
             # add empty bufferpool object to bufferpool
             bufferpoolObj = BufferPool(self.table.num_columns)
             bufferpoolObj.pin = 1
-            bufferpoolObj.numTransactions = self.globalTransactionsCount
+            # bufferpoolObj.numTransactions = self.globalTransactionsCount
 
-            self.bringToBufferpool(bufferpoolObj, baseFileAdded)
+            index = self.bringToBufferpool(bufferpoolObj, baseFileAdded)
+            # self.bufferpool[index].numTransactions = self.globalTransactionsCount
+
         else:
             index = self.BufferpoolFiles.index(baseFileAdded)
             bufferpoolObj = self.bufferpool[index]
+
+        self.bufferpool[index].numTransactions = self.globalTransactionsCount
+        # print("globalTransactionsCount: " +  str(self.globalTransactionsCount) + " index: " + str(index))
 
         # print("bufferpoolObj: ", bufferpoolObj.contents)
         self.addRecordTocopy(columns, bufferpoolObj)
@@ -330,7 +340,7 @@ class Query:
                 tempbytearray[j] = physicalPage.data[fourthIndex + j]
                 j = j + 1
             TIDRecord.append(int.from_bytes(tempbytearray, byteorder = 'big'))
-    
+
 
     def addToTIDRecordArray(self, TIDRecord, currentTID):
         firstIndex = self.table.page_directory2[currentTID][0]
@@ -348,26 +358,25 @@ class Query:
                 tempbytearray[j] = physicalPage.data[fourthIndex + j]
                 j = j + 1
             TIDRecord.append(int.from_bytes(tempbytearray, byteorder = 'big'))
-        print("TIDRecord: ", TIDRecord)
+        # print("TIDRecord: ", TIDRecord)
 
 
     def addToTIDRecordArray2(self, TIDRecord, currentTID):
         # check if TIDs corresponding page is in bufferpool
         bufferpoolObj = BufferPool(self.table.num_columns)
         tailBinFileNeeded = "tailPageRange" + str(( (2**31)- currentTID - 1)  // 2048 + 1) + ".bin"
-        # print("tailbinfileneeded: ", tailBinFileNeeded)
+        print("tailbinfileneeded: ", tailBinFileNeeded)
         # print("files: ", self.BufferpoolFiles)
         index = 0
         if (tailBinFileNeeded not in self.BufferpoolFiles):
-            print("bringing to bufferpool")
+
             index = self.bringToBufferpool(bufferpoolObj, tailBinFileNeeded)
-            # print("printing bufferpool: ", self.BufferpoolFiles)
+            print("replacing at bufferpool index: ", index)
 
         else:
             index = self.BufferpoolFiles.index(tailBinFileNeeded)
-            bufferpoolObj = self.bufferpool[index]
+            # bufferpoolObj = self.bufferpool[index]
             # print("here: " ,bufferpoolObj.contents)
-
         offset = 2047 - (currentTID % 2048)
         #do obaid's bytearray shite
         tempbyteArray = bytearray(4)
@@ -376,20 +385,20 @@ class Query:
             while (j < 4):
                 # print("PLS: ",bufferpoolObj.contents)
                 # print(bufferpoolObj.contents[offset])
-                tempbyteArray[j] = bufferpoolObj.contents[offset]
+                tempbyteArray[j] = self.bufferpool[index].contents[offset]
                 j = j + 1
                 offset = offset + 1
-            # print(int.from_bytes(   tempbyteArray, byteorder = 'big'))
+            # print("TIDRecord element: ", int.from_bytes(   tempbyteArray, byteorder = 'big'))
             TIDRecord.append(int.from_bytes(tempbyteArray, byteorder = 'big'))
             tempbyteArray = bytearray(4)
-        print("TIDREcord: ", TIDRecord)
+        # print("TIDREcord: ", TIDRecord)
 
 
 
     def getLatestRecord2(self, indirection, record, baseRID):
         currentTID = indirection
         TIDRecord = []
-        self.addToTIDRecordArray(TIDRecord, currentTID)
+        self.addToTIDRecordArray2(TIDRecord, currentTID)
         schemaIndexSet = ""
         # whichSchema = -1
         while (self.table.tailMetaData[0][currentTID] != baseRID):
@@ -401,7 +410,7 @@ class Query:
                         record[i] = TIDRecord[i]
             currentTID = self.table.tailMetaData[0][currentTID]
             TIDRecord = []
-            self.addToTIDRecordArray(TIDRecord, currentTID)
+            self.addToTIDRecordArray2(TIDRecord, currentTID)
         TIDSchema = self.table.tailMetaData[1][currentTID]
         for i in range(len(TIDSchema)):
             if (TIDSchema[i] == "1"):
@@ -607,7 +616,7 @@ class Query:
     """
 
     def update(self, key, *columns): # 913151525, [None, 69 , None, None, None]
-        print("entering update")
+        # print("entering update")
         self.globalTransactionsCount += 1
         self.table.keyToTID[key] = self.table.TIDCounter
         """ START Durable implementation """
@@ -627,15 +636,23 @@ class Query:
             # add empty bufferpool object to bufferpool
             bufferpoolObj = BufferPool(self.table.num_columns)
             bufferpoolObj.pin = 1
-            bufferpoolObj.numTransactions = self.globalTransactionsCount
+            # bufferpoolObj.numTransactions = self.globalTransactionsCount
             """ SUS 1 """
             index = self.bringToBufferpool(bufferpoolObj, tailFileAdded)
+            # print("index: ", index)
+            # self.bufferpool[index].numTransactions = self.globalTransactionsCount
+
         else:
             index = self.BufferpoolFiles.index(tailFileAdded)
+            # self.bufferpool[index].numTransactions = self.globalTransactionsCount
             bufferpoolObj = self.bufferpool[index]
+
+        self.bufferpool[index].numTransactions = self.globalTransactionsCount
+        # print("globalTransactionsCount : " +  str(self.globalTransactionsCount) + " index: " + str(index))
 
         # print("bufferpoolObj: ", bufferpoolObj.contents)
         """ SUS 3 """
+        # print(self.bufferpool[4].numTransactions)
         # self.addTailRecordTocopy(key, columns, bufferpoolObj)
         self.addTailRecordTocopy(key, columns, self.bufferpool[index])
         """ bufferpoolObj not connected to bufferpool[0] """

@@ -11,7 +11,7 @@ query = Query(grades_table)
 
 records = {}
 seed(3562901)
-for i in range(1, 10000):
+for i in range(1, 10241):
     key = 92106429 + i
     records[key] = [key, randint(0, 20), randint(0, 20), randint(0, 20), randint(0, 20)]
     query.insert(*records[key])
@@ -71,9 +71,11 @@ for key in keys:
         if column != records[key][i]:
             error = True
     if error:
-        print('select error on', key, ':', record, ', correct:', records[key])
+        pass
+        # print('select error on', key, ':', record, ', correct:', records[key])
     else:
-        print('select on', key, ':', record.columns)
+        pass
+        # print('select on', key, ':', record.columns)
 print("Select finished")
 #
 # # #
@@ -100,6 +102,9 @@ print("Select finished")
 #             updated_columns[i] = None
 # print("Update finished")
 print("printing bufferpool: ", query.BufferpoolFiles)
+for i in range(5):
+    print("final LRU: ", query.bufferpool[i].numTransactions)
+    # print("LRUs:")
 # print("schema: ", query.table.tailMetaData[1][92106430])
 
 # for i in range(0, 100):
