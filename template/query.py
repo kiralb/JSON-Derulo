@@ -163,7 +163,7 @@ class Query:
         f.close()
 
 
-        FilesArray[x].contents = readingByteArray
+        FilesArray[x].contents = bytearray(readingByteArray)
         FileNamesArray[x] = nameOfReplacementFileByteArray
 
     def bringToBufferpool(self, bufferpoolObj, fileToAdd):
@@ -174,11 +174,13 @@ class Query:
             # bufferpoolObj = bufferPoolObjToAdd
             self.BufferpoolFiles.append(fileToAdd)
             self.bufferpoolSize += 1
+            # print("files: ", self.BufferpoolFiles)
         # if it is full, need to evict a page using LRU
         else:
             leastRecentlyUsed = self.bufferpool[0].numTransactions
             indexOfLeastRecentlyUsed = 0
             for index, bufferpoolObject in enumerate(self.bufferpool):
+                # print("LRU: ", leastRecentlyUsed, " index: ", index)
                 if (bufferpoolObject.numTransactions < leastRecentlyUsed):
                     leastRecentlyUsed = bufferpoolObject.numTransactions
                     indexOfLeastRecentlyUsed = index
@@ -193,9 +195,16 @@ class Query:
             self.evictPage(indexOfLeastRecentlyUsed, filesArray,
                 fileNamesArray, fileToGetEvictedByteArray, nameOfFileOfEvicted,
                 nameOfReplacementFileByteArray )
-            bufferpoolObj = self.bufferpool[indexOfLeastRecentlyUsed]
 
-            bufferpoolObj.numTransactions = self.globalTransactionsCount
+            #I'm trying to see if i can access and traverse through the
+            #bytearray that was replaced due to eviction
+            # print("Evicted Contents", self.bufferpool[indexOfLeastRecentlyUsed].contents)
+
+
+            """ SUS 2 """
+            # bufferpoolObj = self.bufferpool[indexOfLeastRecentlyUsed]
+            # bufferpoolObj.numTransactions = self.globalTransactionsCount
+            return indexOfLeastRecentlyUsed
 
 
 
@@ -229,25 +238,6 @@ class Query:
             bufferpoolObj.numTransactions = self.globalTransactionsCount
 
             self.bringToBufferpool(bufferpoolObj, baseFileAdded)
-        #     #if bufferpool not full, just add page from disk to bufferpool
-        #     if (self.bufferpoolSize != 5):
-        #
-        #         self.bufferpool.append(bufferpoolObj)
-        #         self.makeCopyOfBinFileInPool(bufferpoolObj)
-        #         # bufferpoolObj = bufferPoolObjToAdd
-        #         self.BufferpoolFiles.append(baseFileAdded)
-        #         self.bufferpoolSize += 1
-        #     # if it is full, need to evict a page using LRU
-        #     else:
-        #         leastRecentlyUsed = bufferpool[0].numTransactions
-        #         indexOfLeastRecentlyUsed = 0
-        #         for bufferpoolObject in self.bufferpool:
-        #             if (bufferpoolObject.numTransactions < leastRecentlyUsed):
-        #                 leastRecentlyUsed = bufferpoolObject.numTransactions
-        #                 indexOfLeastRecentlyUsed = self.bufferpool.index(bufferpoolObj)
-        #
-        #         # evict page here
-        #         self.evictPage(indexOfLeastRecentlyUsed)
         else:
             index = self.BufferpoolFiles.index(baseFileAdded)
             bufferpoolObj = self.bufferpool[index]
@@ -256,6 +246,9 @@ class Query:
         self.addRecordTocopy(columns, bufferpoolObj)
         bufferpoolObj.dirty = 1
         bufferpoolObj.pin = 0
+
+        """ END Durable implementation """
+
 
         # mapping base RID to what file it can be found in and at what offset in that file
         offset = 4 * self.table.num_columns * (self.table.RIDCounter - 1)
@@ -337,20 +330,61 @@ class Query:
                 tempbytearray[j] = physicalPage.data[fourthIndex + j]
                 j = j + 1
             TIDRecord.append(int.from_bytes(tempbytearray, byteorder = 'big'))
+    
 
+    def addToTIDRecordArray(self, TIDRecord, currentTID):
+        firstIndex = self.table.page_directory2[currentTID][0]
+        secondIndex = self.table.page_directory2[currentTID][1]
+        fourthIndex = self.table.page_directory2[currentTID][3]
+        numColumns = self.table.num_columns + 4
 
+        for i in range(numColumns - 4):
+            thirdIndex = i + 4
+            physicalPage = self.table.pageRangeArray2[firstIndex][secondIndex][thirdIndex]
 
+            tempbytearray = bytearray(4)
+            j = 0
+            while (j < 4):
+                tempbytearray[j] = physicalPage.data[fourthIndex + j]
+                j = j + 1
+            TIDRecord.append(int.from_bytes(tempbytearray, byteorder = 'big'))
+        print("TIDRecord: ", TIDRecord)
 
 
     def addToTIDRecordArray2(self, TIDRecord, currentTID):
         # check if TIDs corresponding page is in bufferpool
-        if (tailrecordsPageNotInPool(currentTID)):
-            bringToBufferpool()
+        bufferpoolObj = BufferPool(self.table.num_columns)
+        tailBinFileNeeded = "tailPageRange" + str(( (2**31)- currentTID - 1)  // 2048 + 1) + ".bin"
+        # print("tailbinfileneeded: ", tailBinFileNeeded)
+        # print("files: ", self.BufferpoolFiles)
+        index = 0
+        if (tailBinFileNeeded not in self.BufferpoolFiles):
+            print("bringing to bufferpool")
+            index = self.bringToBufferpool(bufferpoolObj, tailBinFileNeeded)
+            # print("printing bufferpool: ", self.BufferpoolFiles)
+
+        else:
+            index = self.BufferpoolFiles.index(tailBinFileNeeded)
+            bufferpoolObj = self.bufferpool[index]
+            # print("here: " ,bufferpoolObj.contents)
 
         offset = 2047 - (currentTID % 2048)
-        pass
-
         #do obaid's bytearray shite
+        tempbyteArray = bytearray(4)
+        for i in range(self.table.num_columns):
+            j = 0
+            while (j < 4):
+                # print("PLS: ",bufferpoolObj.contents)
+                # print(bufferpoolObj.contents[offset])
+                tempbyteArray[j] = bufferpoolObj.contents[offset]
+                j = j + 1
+                offset = offset + 1
+            # print(int.from_bytes(   tempbyteArray, byteorder = 'big'))
+            TIDRecord.append(int.from_bytes(tempbyteArray, byteorder = 'big'))
+            tempbyteArray = bytearray(4)
+        print("TIDREcord: ", TIDRecord)
+
+
 
     def getLatestRecord2(self, indirection, record, baseRID):
         currentTID = indirection
@@ -531,26 +565,50 @@ class Query:
     def addTailRecordTocopy(self, key, columns, copy):
         self.assignTailMetaData(key, columns) # indirection and schema columns placed in memory
         contentsToAdd = columns
+        # print(contentsToAdd)
         # contentsToAdd = columns
 
-        # offset = (4 * self.table.num_columns) * (self.table.RIDCounter % 2048 - 1) * 8
-        tempbytearray = bytearray(4)
-        for attribute in contentsToAdd:
+        offset = 2047 - (self.table.TIDCounter % 2048)
+        #tempbytearray = bytearray(4)
+        j = 0
+
+        #offset = 10
+        #tempbyteArray = (914143011).to_bytes(4, byteorder = 'big')
+        #while(j < 4):
+            #copy.contents[j] = tempbyteArray[j]
+            # j = j + 1
+            #copy.contents[j] = tempbyteArray[j]
+            #j = j + 1
+
+
+        for attribute in contentsToAdd: # [none, 14, none, none, none]
+            # print("copy.contents ", copy.contents[0:32])
             if (attribute == None):
+                tempbytearray = (0).to_bytes(4, byteorder = 'big')
+                copy.contents += tempbytearray
                 continue
-            # print("attribute: ", attribute)
+
             tempbytearray = attribute.to_bytes(4, byteorder = 'big')
+            i = 0
+            copy.contents += tempbytearray
+            # print("temp: ", tempbytearray)
             # print("HI HELLO WTF")
             # print("offset: ", offset, " j: ", j)
             # copy.contents[offset] = tempbytearray[j]
-            copy.contents = copy.contents + tempbytearray
-            # offset += 1
+            # copy.contents = copy.contents + tempbytearray
+
+            # print(copy.contents[0:16])
+
+        # print(copy.contents[0:32])
+        # print("attribute: ", contentsToAdd)
 
     """
     # Update a record with specified key and columns
     """
 
     def update(self, key, *columns): # 913151525, [None, 69 , None, None, None]
+        print("entering update")
+        self.globalTransactionsCount += 1
         self.table.keyToTID[key] = self.table.TIDCounter
         """ START Durable implementation """
 
@@ -563,25 +621,27 @@ class Query:
         tailFileAdded = "tailPageRange" + str(((2**31)- self.table.TIDCounter - 1)  // 2048 + 1) + ".bin"
 
         bufferpoolObj = None
+        index = 0
         if (self.tailrecordsPageNotInPool(self.table.TIDCounter)):
+            print("ENTERING HERE")
             # add empty bufferpool object to bufferpool
             bufferpoolObj = BufferPool(self.table.num_columns)
             bufferpoolObj.pin = 1
             bufferpoolObj.numTransactions = self.globalTransactionsCount
-
-            self.bufferpool.append(bufferpoolObj)
-            self.makeCopyOfBinFileInPool(bufferpoolObj)
-            # bufferpoolObj = bufferPoolObjToAdd
-
-            self.BufferpoolFiles.append(tailFileAdded)
-            self.bufferpoolSize += 1
+            """ SUS 1 """
+            index = self.bringToBufferpool(bufferpoolObj, tailFileAdded)
         else:
-            # print("got here 2")
             index = self.BufferpoolFiles.index(tailFileAdded)
             bufferpoolObj = self.bufferpool[index]
 
         # print("bufferpoolObj: ", bufferpoolObj.contents)
-        self.addTailRecordTocopy(key, columns, bufferpoolObj)
+        """ SUS 3 """
+        # self.addTailRecordTocopy(key, columns, bufferpoolObj)
+        self.addTailRecordTocopy(key, columns, self.bufferpool[index])
+        """ bufferpoolObj not connected to bufferpool[0] """
+        # print("CONTENTS: ", self.bufferpool[0].contents)
+        # print("CONTENTS: ", bufferpoolObj.contents[0:32])
+        # print("here + ", bufferpoolObj.contents)
         bufferpoolObj.pin = 0
 
         """ END Durable implementation """
