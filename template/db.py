@@ -9,12 +9,7 @@ class Database():
         pass
 
 
-    """
 
-    Initialize bufferpool here
-    Refer to top of page 2 of Milestone2.pdf
-
-    """
     def open(self, path):
         path = "ECS165"
         try:

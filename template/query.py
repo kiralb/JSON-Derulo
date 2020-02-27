@@ -100,65 +100,6 @@ class Query:
                 dictionaryOfIndex[attribute].append(RID)
 
 
-    def addToBaseBinFiles(self, columns):
-        # print("this function got called")
-
-        # if (self.table.RIDCounter % 2049 == 0):
-        #     self.numBaseBinFiles += 1
-        #
-        #
-        # nameOfFile = "basePageRange" + str(self.numBaseBinFiles) + ".bin"
-        # f = open(nameOfFile, "ab")
-        #
-        # byteArrayToAdd = bytearray(4)
-        # for attribute in columns:
-        #     if (attribute == None):
-        #         attribute = 0
-        #     byteArrayToAdd = (attribute).to_bytes(4, byteorder = 'big')
-        #     f.write(byteArrayToAdd)
-        # f.close()
-        # f = open(nameOfFile, "rb")
-        # x = f.read()
-        #
-        # temp = bytearray(4)
-        # i = 0
-        # while (i < 4):
-        #     temp[i] = x[i]
-        #     i = i + 1
-        # print(int.from_bytes(temp, byteorder = 'big'))
-        pass
-
-    def addToTailBinFiles(self, columns):
-        # print("this function got called")
-
-        if (self.table.TIDCounter % 2049 == 0):
-            self.numTailBinFiles += 1
-
-
-        nameOfFile = "tailPageRange" + str(self.numTailBinFiles) + ".bin"
-        f = open(nameOfFile, "ab")
-
-        byteArrayToAdd = bytearray(4)
-        for attribute in columns:
-            if (attribute == None):
-                attribute = 0
-            byteArrayToAdd = (attribute).to_bytes(4, byteorder = 'big')
-            f.write(byteArrayToAdd)
-        f.close()
-        # f = open(nameOfFile, "rb")
-        # x = f.read()
-        #
-        # temp = bytearray(4)
-        # i = 0
-        # while (i < 4):
-        #     temp[i] = x[i]
-        #     i = i + 1
-        # print(int.from_bytes(temp, byteorder = 'big'))
-
-
-
-
-
 
 
     """
@@ -334,46 +275,6 @@ class Query:
             attributeToAdd = (int).from_bytes(tempbytearray, byteorder = 'big')
             record.append(attributeToAdd)
 
-    def getTIDIndirection(self, currentTID):
-        firstIndex = self.table.page_directory2[currentTID][0]
-        secondIndex = self.table.page_directory2[currentTID][1]
-        thirdIndex = 0
-        fourthIndex = self.table.page_directory2[currentTID][3]
-        TIDIndirectionPage = self.table.pageRangeArray2[firstIndex][secondIndex][thirdIndex]
-
-        j = 0
-        tempbytearray = bytearray(4)
-        while (j < 4):
-            tempbytearray[j] = TIDIndirectionPage.data[fourthIndex + j]
-            j = j + 1
-#        print((int).from_bytes(tempbytearray, byteorder = 'big'))
-        return (int).from_bytes(tempbytearray, byteorder = 'big')
-
-
-    def getTIDsSchema(self, currentTID):
-        firstIndex = self.table.page_directory2[currentTID][0]
-        secondIndex = self.table.page_directory2[currentTID][1]
-        thirdIndex = 3
-        fourthIndex = self.table.page_directory2[currentTID][3]
-        TIDPage = self.table.pageRangeArray2[firstIndex][secondIndex][thirdIndex]
-
-        tempbytearray = bytearray(4)
-        j = 0
-        while (j < 4):
-            tempbytearray[j] = TIDPage.data[fourthIndex + j]
-            j = j + 1
-        return (int).from_bytes(tempbytearray, byteorder = 'big')
-
-
-    def putZerosInTheFront(self, number):
-        y = str(number)
-        i = 0
-        while (i < 5):
-            if (len(y) < 5):
-                y = "0" + y
-            i = i + 1
-
-        return y
 
 
     def addToTIDRecordArray(self, TIDRecord, currentTID):
@@ -395,37 +296,29 @@ class Query:
 
 
 
+    # def evict(FilesArray, file toGetEvicted, replacementfile):
+    #     if(fileToGetEvicted in FilesArray):
+    #         x = index(fileTogetEvicted)
+    #         #Index of Whats being Swapped
+    #     else:
+    #         return
+    #     f = open(fileTogetEvicted + ".bin", "wb")
+    #     f.write()
+    #     f.close()
+    #
+    #     f = open(replacementfile, "rb") #will have to turn this into bytes
+    #     f.read()
+    #     x = index(fileToGetEvicted)
+    #     FilesArray[x] = f #F shoudl e the byte array
+    #     #Evict from one file,Write to it's curent file
+    # #Write
+    #     f.close()
+    # #Evict from one file. Write it's current file
+    #     x = index(fileToGetEvicted)
+    #     FilesArray[x] = f
+    #     f.close()
+    # #End Evict
 
-
-    def getLatestRecord(self, indirection, record, baseRID):
-        currentTID = indirection
-        TIDRecord = []
-        self.addToTIDRecordArray(TIDRecord, currentTID)
-        schemaIndexSet = "" # used later to check if schema index is in string
-
-        while (self.getTIDIndirection(currentTID) != baseRID):
-            TIDSchema = self.getTIDsSchema(currentTID)
-            schema = self.putZerosInTheFront(TIDSchema)
-#            print("TIDRecord: ", TIDRecord," schema: ", schema)
-            for i in range(len(schema)):
-                if (schema[i] == "1"):
-                    if (str(i) not in schemaIndexSet):
-                        schemaIndexSet += str(i)
-                        record[i] = TIDRecord[i]
-            currentTID = self.getTIDIndirection(currentTID)
-            TIDRecord = []
-            self.addToTIDRecordArray(TIDRecord, currentTID)
-        TIDSchema = self.getTIDsSchema(currentTID)
-        schema = self.putZerosInTheFront(TIDSchema)
-        for i in range(len(schema)):
-            if (schema[i] == "1"):
-                if (str(i) not in schemaIndexSet):
-                    schemaIndexSet += str(i)
-                    record[i] = TIDRecord[i]
-
-
-#        print("TID Record: ", TIDRecord)
-#        print("record final: ", record)
 
     def addToTIDRecordArray2(self, TIDRecord, currentTID):
         # if (TIDsPageRange not in bufferpool):
@@ -500,10 +393,6 @@ class Query:
         # print("listOfRecordObjects: ", listOfRecordObjects[0].columns)
 
         return listOfRecordObjects
-
-
-
-
 
 
 
