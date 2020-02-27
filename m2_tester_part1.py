@@ -11,7 +11,7 @@ query = Query(grades_table)
 
 records = {}
 seed(3562901)
-for i in range(1, 1000):
+for i in range(1, 16384):
     key = 92106429 + i
     records[key] = [key, randint(0, 20), randint(0, 20), randint(0, 20), randint(0, 20)]
     query.insert(*records[key])
@@ -39,42 +39,42 @@ print("Insert finished")
 # print(int.from_bytes(tempByteArray, byteorder = 'big'))
 
 
-for key in keys:
-    record = query.select(key, 0, [1, 1, 1, 1, 1])[0]
-    error = False
-    for i, column in enumerate(record.columns):
-        if column != records[key][i]:
-            error = True
-    if error:
-        print('select error on', key, ':', record, ', correct:', records[key])
-    else:
-        print('select on', key, ':', record.columns)
-print("Select finished")
-
-# #
-numUpdates = 1
-for key in keys:
-    updated_columns = [None, None, None, None, None]
-    for i in range(1, grades_table.num_columns):
-        # if numUpdates != 2050:
-        # numUpdates += 1
-        value = randint(0, 20)
-        updated_columns[i] = value
-        original = records[key].copy()
-        records[key][i] = value
-        query.update(key, *updated_columns)
-        record = query.select(key, 0, [1, 1, 1, 1, 1])[0]
-        error = False
-        for j, column in enumerate(record.columns):
-            if column != records[key][j]:
-                error = True
-        if error:
-            print('update error on', original, 'and', updated_columns, ':', record, ', correct:', records[key])
-        else:
-            print('update on', original, 'and', updated_columns, ':', record.columns)
-        updated_columns[i] = None
-print("Update finished")
-# print("printing bufferpool: ", query.BufferpoolFiles)
+# for key in keys:
+#     record = query.select(key, 0, [1, 1, 1, 1, 1])[0]
+#     error = False
+#     for i, column in enumerate(record.columns):
+#         if column != records[key][i]:
+#             error = True
+#     if error:
+#         print('select error on', key, ':', record, ', correct:', records[key])
+#     else:
+#         print('select on', key, ':', record.columns)
+# print("Select finished")
+#
+# # #
+# numUpdates = 1
+# for key in keys:
+#     updated_columns = [None, None, None, None, None]
+#     for i in range(1, grades_table.num_columns):
+#         # if numUpdates != 2050:
+#         # numUpdates += 1
+#         value = randint(0, 20)
+#         updated_columns[i] = value
+#         original = records[key].copy()
+#         records[key][i] = value
+#         query.update(key, *updated_columns)
+#         record = query.select(key, 0, [1, 1, 1, 1, 1])[0]
+#         error = False
+#         for j, column in enumerate(record.columns):
+#             if column != records[key][j]:
+#                 error = True
+#         if error:
+#             print('update error on', original, 'and', updated_columns, ':', record, ', correct:', records[key])
+#         else:
+#             print('update on', original, 'and', updated_columns, ':', record.columns)
+#         updated_columns[i] = None
+# print("Update finished")
+print("printing bufferpool: ", query.BufferpoolFiles)
 # print("schema: ", query.table.tailMetaData[1][92106430])
 
 # for i in range(0, 100):

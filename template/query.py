@@ -14,7 +14,7 @@ class Query:
         self.chdirFlag = 0
         self.bufferpoolSize = 0
         self.bufferpool = []
-        self.BufferpoolFiles = []
+        self.BufferpoolFiles = [] # ["basePageRange1.bin", "tailPageRange1.bin"]
         self.numBaseBinFiles = 1
         self.numTailBinFiles = 1
         self.globalTransactionsCount = 0
@@ -117,10 +117,10 @@ class Query:
         f = open(nameOfFile, "ab")
         return f
 
-    def recordsPageNotInPool(self):
+    def recordsPageNotInPool(self, baseRID):
         if (self.bufferpoolSize == 0):
             return 1
-        baseBinFileNeeded = "basePageRange" + str(((self.table.RIDCounter - 1)// 2048) + 1) + ".bin"
+        baseBinFileNeeded = "basePageRange" + str(((baseRID - 1)// 2048) + 1) + ".bin"
         # print("base bin file: ", baseBinFileNeeded)
         if (baseBinFileNeeded not in self.BufferpoolFiles):
             return 1
@@ -149,10 +149,53 @@ class Query:
             # offset += 1
 
 
-    def evictPage(self, indexOfPageToEvict):
+    def evictPage(self, leastRecentlyUsed, FilesArray, FileNamesArray, fileToGetEvictedByteArray, nameOfFileOfEvicted, nameOfReplacementFileByteArray):
+    	#fileToGetEvictedByteArray
+        x = leastRecentlyUsed
+    	#Need to get the name of the file, righ tnow we will pass it in but we can fix that by calling the contents.name
+        f = open(nameOfFileOfEvicted , "wb")
+        f.write(fileToGetEvictedByteArray)
+        f.close()
 
-        pass
+        f = open(nameOfReplacementFileByteArray, "rb")
+        readingByteArray = f.read()
+    	#print(readingByteArray)
+        f.close()
 
+
+        FilesArray[x].contents = readingByteArray
+        FileNamesArray[x] = nameOfReplacementFileByteArray
+
+    def bringToBufferpool(self, bufferpoolObj, fileToAdd):
+        #if bufferpool not full, just add page from disk to bufferpool
+        if (self.bufferpoolSize != 5):
+            self.bufferpool.append(bufferpoolObj)
+            self.makeCopyOfBinFileInPool(bufferpoolObj)
+            # bufferpoolObj = bufferPoolObjToAdd
+            self.BufferpoolFiles.append(fileToAdd)
+            self.bufferpoolSize += 1
+        # if it is full, need to evict a page using LRU
+        else:
+            leastRecentlyUsed = self.bufferpool[0].numTransactions
+            indexOfLeastRecentlyUsed = 0
+            for index, bufferpoolObject in enumerate(self.bufferpool):
+                if (bufferpoolObject.numTransactions < leastRecentlyUsed):
+                    leastRecentlyUsed = bufferpoolObject.numTransactions
+                    indexOfLeastRecentlyUsed = index
+
+            # evict page here
+            filesArray = self.bufferpool
+            fileNamesArray = self.BufferpoolFiles
+            fileToGetEvictedByteArray = self.bufferpool[indexOfLeastRecentlyUsed].contents
+            nameOfFileOfEvicted = self.BufferpoolFiles[indexOfLeastRecentlyUsed]
+            nameOfReplacementFileByteArray = fileToAdd
+
+            self.evictPage(indexOfLeastRecentlyUsed, filesArray,
+                fileNamesArray, fileToGetEvictedByteArray, nameOfFileOfEvicted,
+                nameOfReplacementFileByteArray )
+            bufferpoolObj = self.bufferpool[indexOfLeastRecentlyUsed]
+
+            bufferpoolObj.numTransactions = self.globalTransactionsCount
 
 
 
@@ -179,31 +222,32 @@ class Query:
         baseFileAdded = "basePageRange" + str(((self.table.RIDCounter - 1)// 2048) + 1) + ".bin"
 
         bufferpoolObj = None
-        if (self.recordsPageNotInPool()):
+        if (self.recordsPageNotInPool(self.table.RIDCounter)):
             # add empty bufferpool object to bufferpool
             bufferpoolObj = BufferPool(self.table.num_columns)
             bufferpoolObj.pin = 1
             bufferpoolObj.numTransactions = self.globalTransactionsCount
 
-            #if bufferpool not full, just add page from disk to bufferpool
-            if (self.bufferpoolSize != 5):
-
-                self.bufferpool.append(bufferpoolObj)
-                self.makeCopyOfBinFileInPool(bufferpoolObj)
-                # bufferpoolObj = bufferPoolObjToAdd
-                self.BufferpoolFiles.append(baseFileAdded)
-                self.bufferpoolSize += 1
-            # if it is full, need to evict a page using LRU
-            else:
-                leastRecentlyUsed = bufferpool[0].numTransactions
-                indexOfLeastRecentlyUsed = 0
-                for bufferpoolObject in self.bufferpool:
-                    if (bufferpoolObject.numTransactions < leastRecentlyUsed):
-                        leastRecentlyUsed = bufferpoolObject.numTransactions
-                        indexOfLeastRecentlyUsed = self.bufferpool.index(bufferpoolObj)
-
-                # evict page here
-                self.evictPage(indexOfLeastRecentlyUsed)
+            self.bringToBufferpool(bufferpoolObj, baseFileAdded)
+        #     #if bufferpool not full, just add page from disk to bufferpool
+        #     if (self.bufferpoolSize != 5):
+        #
+        #         self.bufferpool.append(bufferpoolObj)
+        #         self.makeCopyOfBinFileInPool(bufferpoolObj)
+        #         # bufferpoolObj = bufferPoolObjToAdd
+        #         self.BufferpoolFiles.append(baseFileAdded)
+        #         self.bufferpoolSize += 1
+        #     # if it is full, need to evict a page using LRU
+        #     else:
+        #         leastRecentlyUsed = bufferpool[0].numTransactions
+        #         indexOfLeastRecentlyUsed = 0
+        #         for bufferpoolObject in self.bufferpool:
+        #             if (bufferpoolObject.numTransactions < leastRecentlyUsed):
+        #                 leastRecentlyUsed = bufferpoolObject.numTransactions
+        #                 indexOfLeastRecentlyUsed = self.bufferpool.index(bufferpoolObj)
+        #
+        #         # evict page here
+        #         self.evictPage(indexOfLeastRecentlyUsed)
         else:
             index = self.BufferpoolFiles.index(baseFileAdded)
             bufferpoolObj = self.bufferpool[index]
@@ -296,33 +340,12 @@ class Query:
 
 
 
-    # def evict(FilesArray, file toGetEvicted, replacementfile):
-    #     if(fileToGetEvicted in FilesArray):
-    #         x = index(fileTogetEvicted)
-    #         #Index of Whats being Swapped
-    #     else:
-    #         return
-    #     f = open(fileTogetEvicted + ".bin", "wb")
-    #     f.write()
-    #     f.close()
-    #
-    #     f = open(replacementfile, "rb") #will have to turn this into bytes
-    #     f.read()
-    #     x = index(fileToGetEvicted)
-    #     FilesArray[x] = f #F shoudl e the byte array
-    #     #Evict from one file,Write to it's curent file
-    # #Write
-    #     f.close()
-    # #Evict from one file. Write it's current file
-    #     x = index(fileToGetEvicted)
-    #     FilesArray[x] = f
-    #     f.close()
-    # #End Evict
 
 
     def addToTIDRecordArray2(self, TIDRecord, currentTID):
-        # if (TIDsPageRange not in bufferpool):
-        #     bringToBufferpool()
+        # check if TIDs corresponding page is in bufferpool
+        if (tailrecordsPageNotInPool(currentTID)):
+            bringToBufferpool()
 
         offset = 2047 - (currentTID % 2048)
         pass
@@ -456,10 +479,10 @@ class Query:
         f = open(nameOfFile, "ab")
         return f
 
-    def tailrecordsPageNotInPool(self):
+    def tailrecordsPageNotInPool(self, tailTID):
         if (self.bufferpoolSize == 0):
             return 1
-        tailBinFileNeeded = "tailPageRange" + str(( (2**31)- self.table.TIDCounter - 1)  // 2048 + 1) + ".bin"
+        tailBinFileNeeded = "tailPageRange" + str(( (2**31)- tailTID - 1)  // 2048 + 1) + ".bin"
 
 
         # print("tail bin file: ", tailBinFileNeeded)
@@ -540,7 +563,7 @@ class Query:
         tailFileAdded = "tailPageRange" + str(((2**31)- self.table.TIDCounter - 1)  // 2048 + 1) + ".bin"
 
         bufferpoolObj = None
-        if (self.tailrecordsPageNotInPool()):
+        if (self.tailrecordsPageNotInPool(self.table.TIDCounter)):
             # add empty bufferpool object to bufferpool
             bufferpoolObj = BufferPool(self.table.num_columns)
             bufferpoolObj.pin = 1
