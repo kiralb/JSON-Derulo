@@ -427,7 +427,37 @@ class Query:
 #        print("TID Record: ", TIDRecord)
 #        print("record final: ", record)
 
+    def addToTIDRecordArray2(self, TIDRecord, currentTID):
+        # if (TIDsPageRange not in bufferpool):
+        #     bringToBufferpool()
 
+        offset = 2047 - (currentTID % 2048)
+        pass
+
+        #do obaid's bytearray shite
+
+    def getLatestRecord2(self, indirection, record, baseRID):
+        currentTID = indirection
+        TIDRecord = []
+        self.addToTIDRecordArray(TIDRecord, currentTID)
+        schemaIndexSet = ""
+        # whichSchema = -1
+        while (self.table.tailMetaData[0][currentTID] != baseRID):
+            TIDSchema = self.table.tailMetaData[1][currentTID]
+            for i in range(len(TIDSchema)):
+                if (TIDSchema[i] == "1"):
+                    if (str(i) not in schemaIndexSet):
+                        schemaIndexSet += str(i)
+                        record[i] = TIDRecord[i]
+            currentTID = self.table.tailMetaData[0][currentTID]
+            TIDRecord = []
+            self.addToTIDRecordArray(TIDRecord, currentTID)
+        TIDSchema = self.table.tailMetaData[1][currentTID]
+        for i in range(len(TIDSchema)):
+            if (TIDSchema[i] == "1"):
+                if (str(i) not in schemaIndexSet):
+                    schemaIndexSet += str(i)
+                    record[i] = TIDRecord[i]
 
 
     """
@@ -450,10 +480,13 @@ class Query:
             baseRecordsRID = RID
             self.addToRecordArray(key, record, RID)
 
-            baseRecordsIndirection = self.getIndirectionFromBaseRecord(RID)
+            # baseRecordsIndirection = self.getIndirectionFromBaseRecord(RID)
+            baseRecordsIndirection = self.table.baseMetaData[0][RID]
 
             if (baseRecordsIndirection != 0):
-                self.getLatestRecord(baseRecordsIndirection, record, baseRecordsRID)
+                # print("entered getLatestRecord")
+                # self.getLatestRecord(baseRecordsIndirection, record, baseRecordsRID)
+                self.getLatestRecord2(baseRecordsIndirection, record, baseRecordsRID)
 
             for i in range(self.table.num_columns):
                 if (query_columns[i] == 1):
@@ -576,7 +609,7 @@ class Query:
         indirection = self.assignTailIndirection(key)
         schema = self.assignTailSchema(columns)
         self.table.tailMetaData[0][self.table.TIDCounter] = indirection
-        print("SCHEMA IS: ", schema)
+        # print("SCHEMA IS: ", schema)
         self.table.tailMetaData[1][self.table.TIDCounter] = schema
 
 
@@ -584,7 +617,7 @@ class Query:
 
 
     def addTailRecordTocopy(self, key, columns, copy):
-        self.assignTailMetaData(key, columns)
+        self.assignTailMetaData(key, columns) # indirection and schema columns placed in memory
         contentsToAdd = columns
         # contentsToAdd = columns
 
