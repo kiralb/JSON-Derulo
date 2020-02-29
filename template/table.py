@@ -51,7 +51,7 @@ class Table:
         self.keyToTID = {}
 
         """ START Milestone2 Stuff """
-
+        self.index = Index(self)
         # holds an index object for each column in base pages
         self.listOfIndexObj = []
         for column in range(num_columns):

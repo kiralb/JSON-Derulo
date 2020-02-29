@@ -15,6 +15,7 @@ seed(3562901)
 for i in range(0, 1000):
     key = 92106429 + i
     records[key] = [key, randint(0, 20), randint(0, 20), randint(0, 20), randint(0, 20)]
+    print("INSERTING2: ", records[key])
 keys = sorted(list(records.keys()))
 for _ in range(10):
     for key in keys:
@@ -33,7 +34,7 @@ for key in keys:
         if column != records[key][i]:
             error = True
     if error:
-        print('select error on', key, ':', record, ', correct:', records[key])
+        print('select error on', key, ':', record.columns, ', correct:', records[key])
 print("Select finished")
 
 deleted_keys = sample(keys, 100)

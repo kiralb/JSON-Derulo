@@ -11,42 +11,40 @@ query = Query(grades_table)
 
 records = {}
 seed(3562901)
-for i in range(1, 10241):
+for i in range(0, 1000):
     key = 92106429 + i
     records[key] = [key, randint(0, 20), randint(0, 20), randint(0, 20), randint(0, 20)]
     query.insert(*records[key])
 keys = sorted(list(records.keys()))
 print("Insert finished")
 
-# print("printing bufferpool: ", query.BufferpoolFiles)
+grades_table.index.create_index(1)
+grades_table.index.create_index(2)
+grades_table.index.create_index(3)
+grades_table.index.create_index(4)
 
+_records = [records[key] for key in keys]
+for c in range(grades_table.num_columns):
+    _keys = list(set([record[c] for record in _records]))
+    index = {v: [record for record in _records if record[c] == v] for v in _keys}
+    for key in _keys:
+        results = [r.columns for r in query.select(key, c, [1, 1, 1, 1, 1])]
+        error = False
+        if len(results) != len(index[key]):
+            error = True
+        if not error:
+            for record in index[key]:
+                if record not in results:
+                    error = True
+                    break
+        if error:
+            print('select error on', key, ', column', c, ':', results, ', correct:', index[key])
+print("Select finished")
 
-# print("bufferpool[1]: ", query.bufferpool[0].contents)
-
-# i = 0
-# x = 0
-# tempByteArray = bytearray(4)
-# while(x < 20):
-#     # print("x: ", x)
-#     while(i < 4):
-#         # print("i: ", i)
-#         tempByteArray[i] = query.bufferpool[0].contents[x]
-#         i = i + 1
-#         x = x + 1
-#     # x += 4
-#     i = 0
-#     # print("printing")
-#     print(int.from_bytes(tempByteArray, byteorder = 'big'))
-#     tempByteArray = bytearray(4)
-# print("printing")
-# print(int.from_bytes(tempByteArray, byteorder = 'big'))
-
-numUpdates = 1
-for key in keys:
-    updated_columns = [None, None, None, None, None]
-    for i in range(1, grades_table.num_columns):
-        if numUpdates != 14000:
-            numUpdates += 1
+for _ in range(10):
+    for key in keys:
+        updated_columns = [None, None, None, None, None]
+        for i in range(1, grades_table.num_columns):
             value = randint(0, 20)
             updated_columns[i] = value
             original = records[key].copy()
@@ -59,61 +57,18 @@ for key in keys:
                     error = True
             if error:
                 print('update error on', original, 'and', updated_columns, ':', record, ', correct:', records[key])
-            else:
-                print('update on', original, 'and', updated_columns, ':', record.columns)
+            # else:
+            #     print('update on', original, 'and', updated_columns, ':', record)
             updated_columns[i] = None
 print("Update finished")
 
-for key in keys:
-    record = query.select(key, 0, [1, 1, 1, 1, 1])[0]
-    error = False
-    for i, column in enumerate(record.columns):
-        if column != records[key][i]:
-            error = True
-    if error:
-        pass
-        # print('select error on', key, ':', record, ', correct:', records[key])
-    else:
-        pass
-        # print('select on', key, ':', record.columns)
-print("Select finished")
-#
-# # #
-# numUpdates = 1
-# for key in keys:
-#     updated_columns = [None, None, None, None, None]
-#     for i in range(1, grades_table.num_columns):
-#         if numUpdates != 14000:
-#             numUpdates += 1
-#             value = randint(0, 20)
-#             updated_columns[i] = value
-#             original = records[key].copy()
-#             records[key][i] = value
-#             query.update(key, *updated_columns)
-#             record = query.select(key, 0, [1, 1, 1, 1, 1])[0]
-#             error = False
-#             for j, column in enumerate(record.columns):
-#                 if column != records[key][j]:
-#                     error = True
-#             if error:
-#                 print('update error on', original, 'and', updated_columns, ':', record, ', correct:', records[key])
-#             else:
-#                 print('update on', original, 'and', updated_columns, ':', record.columns)
-#             updated_columns[i] = None
-# print("Update finished")
-print("printing bufferpool: ", query.BufferpoolFiles)
-for i in range(5):
-    print("final LRU: ", query.bufferpool[i].numTransactions)
-    # print("LRUs:")
-# print("schema: ", query.table.tailMetaData[1][92106430])
-
-# for i in range(0, 100):
-#     r = sorted(sample(range(0, len(keys)), 2))
-#     column_sum = sum(map(lambda key: records[key][0], keys[r[0]: r[1] + 1]))
-#     result = query.sum(keys[r[0]], keys[r[1]], 0)
-#     if column_sum != result:
-#         print('sum error on [', keys[r[0]], ',', keys[r[1]], ']: ', result, ', correct: ', column_sum)
-#     # else:
-#     #     print('sum on [', keys[r[0]], ',', keys[r[1]], ']: ', column_sum)
-# print("Aggregate finished")
+for i in range(0, 100):
+    r = sorted(sample(range(0, len(keys)), 2))
+    column_sum = sum(map(lambda key: records[key][0], keys[r[0]: r[1] + 1]))
+    result = query.sum(keys[r[0]], keys[r[1]], 0)
+    if column_sum != result:
+        print('sum error on [', keys[r[0]], ',', keys[r[1]], ']: ', result, ', correct: ', column_sum)
+    # else:
+    #     print('sum on [', keys[r[0]], ',', keys[r[1]], ']: ', column_sum)
+print("Aggregate finished")
 db.close()

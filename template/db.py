@@ -51,12 +51,14 @@ class Database():
     # Returns table with the passed name
     """
     def get_table(self, name):
-        globalPath = "/Users/as/Documents/ecs165a/milestone1/JSON-Derulo/ECS165/"
+        globalPath = "/Users/BrianNguyen/Documents/GitHub/JSON-Derulo/ECS165/"
         path = name + ".pkl"
         print(path)
         f = open(globalPath + path, "rb")
         dict_x = pickle.load(f)
         print(dict_x)
         print(dict_x.num_columns)
+        # print(dict_x.baseMetaData)
         # print ("key {}, value {} ". format(0,  dict_x[0]))
+        return dict_x
         f.close()

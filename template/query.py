@@ -26,7 +26,19 @@ class Query:
     """
 
     def delete(self, key):
-        pass
+
+        RID = self.table.keyToRID[key]
+
+        firstIndex = self.table.page_directory[RID][0]
+        secondIndex = self.table.page_directory[RID][1]
+        fourthIndex = self.table.page_directory[RID][3]
+
+        for i in range(self.table.num_columns):
+            thirdIndex = i + 4
+            j = 0
+            while (j < 4):
+                self.table.pageRangeArray[firstIndex][secondIndex][thirdIndex].data[fourthIndex + j] = 0
+                j += 1
 
     def mapRIDToIndices(self):
         arrayOfIndices = []
@@ -365,7 +377,7 @@ class Query:
         # check if TIDs corresponding page is in bufferpool
         bufferpoolObj = BufferPool(self.table.num_columns)
         tailBinFileNeeded = "tailPageRange" + str(( (2**31)- currentTID - 1)  // 2048 + 1) + ".bin"
-        print("tailbinfileneeded: ", tailBinFileNeeded)
+        # print("tailbinfileneeded: ", tailBinFileNeeded)
         # print("files: ", self.BufferpoolFiles)
         index = 0
         if (tailBinFileNeeded not in self.BufferpoolFiles):
@@ -396,9 +408,10 @@ class Query:
 
 
     def getLatestRecord2(self, indirection, record, baseRID):
+        # print("got here in getLatestRecord2")
         currentTID = indirection
         TIDRecord = []
-        self.addToTIDRecordArray2(TIDRecord, currentTID)
+        self.addToTIDRecordArray(TIDRecord, currentTID)
         schemaIndexSet = ""
         # whichSchema = -1
         while (self.table.tailMetaData[0][currentTID] != baseRID):
@@ -410,7 +423,7 @@ class Query:
                         record[i] = TIDRecord[i]
             currentTID = self.table.tailMetaData[0][currentTID]
             TIDRecord = []
-            self.addToTIDRecordArray2(TIDRecord, currentTID)
+            self.addToTIDRecordArray(TIDRecord, currentTID)
         TIDSchema = self.table.tailMetaData[1][currentTID]
         for i in range(len(TIDSchema)):
             if (TIDSchema[i] == "1"):
@@ -427,11 +440,14 @@ class Query:
 
     def select(self, key, column, query_columns):
         listOfRecordObjects = []
+        # print(self.table.listOfIndexObj[column].keyToRIDList)
         if (key not in self.table.listOfIndexObj[column].keyToRIDList):
+            print("inside select")
             return listOfRecordObjects
 
         listOfRIDsToSelect = self.table.listOfIndexObj[column].keyToRIDList[key]
         for RID in listOfRIDsToSelect:
+
             # add to original data to record array
             record = []
             queryRecord = []
@@ -632,7 +648,7 @@ class Query:
         bufferpoolObj = None
         index = 0
         if (self.tailrecordsPageNotInPool(self.table.TIDCounter)):
-            print("ENTERING HERE")
+            # print("ENTERING HERE")
             # add empty bufferpool object to bufferpool
             bufferpoolObj = BufferPool(self.table.num_columns)
             bufferpoolObj.pin = 1
