@@ -118,14 +118,12 @@ class Query:
     # Insert a record with specified columns
     """
     def createBinFile(self):
-        # print("RID: ", self.table.RIDCounter)
         if (self.table.RIDCounter % 2048 == 1):
             return 1
         return 0
 
     def makeNewBinFile(self):
         nameOfFile = "basePageRange" + str(self.numBaseBinFiles) + ".bin"
-        # print("making new bin file: ", nameOfFile)
         f = open(nameOfFile, "ab")
         return f
 
@@ -133,7 +131,6 @@ class Query:
         if (self.bufferpoolSize == 0):
             return 1
         baseBinFileNeeded = "basePageRange" + str(((baseRID - 1)// 2048) + 1) + ".bin"
-        # print("base bin file: ", baseBinFileNeeded)
         if (baseBinFileNeeded not in self.BufferpoolFiles):
             return 1
         return 0
@@ -146,32 +143,23 @@ class Query:
 
     def addRecordTocopy(self, columns, copy):
         contentsToAdd = columns
-        # contentsToAdd = columns
 
         tempbytearray = bytearray(4)
         for attribute in contentsToAdd:
             if (attribute == None):
                 continue
-            # print("attribute: ", attribute)
             tempbytearray = attribute.to_bytes(4, byteorder = 'big')
-            # print("HI HELLO WTF")
-            # print("offset: ", offset, " j: ", j)
-            # copy.contents[offset] = tempbytearray[j]
             copy.contents = copy.contents + tempbytearray
-            # offset += 1
 
 
     def evictPage(self, leastRecentlyUsed, FilesArray, FileNamesArray, fileToGetEvictedByteArray, nameOfFileOfEvicted, nameOfReplacementFileByteArray):
-    	#fileToGetEvictedByteArray
         x = leastRecentlyUsed
-    	#Need to get the name of the file, righ tnow we will pass it in but we can fix that by calling the contents.name
         f = open(nameOfFileOfEvicted , "wb")
         f.write(fileToGetEvictedByteArray)
         f.close()
 
         f = open(nameOfReplacementFileByteArray, "rb")
         readingByteArray = f.read()
-    	#print(readingByteArray)
         f.close()
 
 
@@ -206,21 +194,10 @@ class Query:
             nameOfFileOfEvicted = self.BufferpoolFiles[indexOfLeastRecentlyUsed]
             nameOfReplacementFileByteArray = fileToAdd
 
-            # print("1: " , self.bufferpool[4].numTransactions)
 
             self.evictPage(indexOfLeastRecentlyUsed, filesArray,
                 fileNamesArray, fileToGetEvictedByteArray, nameOfFileOfEvicted,
                 nameOfReplacementFileByteArray )
-            # print("2: " ,self.bufferpool[4].numTransactions)
-
-            #I'm trying to see if i can access and traverse through the
-            #bytearray that was replaced due to eviction
-            # print("Evicted Contents", self.bufferpool[indexOfLeastRecentlyUsed].contents)
-
-
-            """ SUS 2 """
-            # bufferpoolObj = self.bufferpool[indexOfLeastRecentlyUsed]
-            # self.bufferpool[index].numTransactions = self.globalTransactionsCount
             return indexOfLeastRecentlyUsed
 
 
@@ -308,7 +285,6 @@ class Query:
         for i in range(numColumns - 4):
             attribute = columns[i]
             thirdIndex = i + 4
-#            print("rid: ", RIDCounter, " firstIndex: ", firstIndex, " secondINdex: ", secondIndex, " thirdIndex: ", thirdIndex, " fourthIndex: ", fourthIndex)
             physicalPageToAdd = self.table.pageRangeArray[firstIndex][secondIndex][thirdIndex]
             self.addToByteArray(physicalPageToAdd, fourthIndex, attribute)
 
@@ -354,31 +330,10 @@ class Query:
             TIDRecord.append(int.from_bytes(tempbytearray, byteorder = 'big'))
 
 
-    def addToTIDRecordArray(self, TIDRecord, currentTID):
-        firstIndex = self.table.page_directory2[currentTID][0]
-        secondIndex = self.table.page_directory2[currentTID][1]
-        fourthIndex = self.table.page_directory2[currentTID][3]
-        numColumns = self.table.num_columns + 4
-
-        for i in range(numColumns - 4):
-            thirdIndex = i + 4
-            physicalPage = self.table.pageRangeArray2[firstIndex][secondIndex][thirdIndex]
-
-            tempbytearray = bytearray(4)
-            j = 0
-            while (j < 4):
-                tempbytearray[j] = physicalPage.data[fourthIndex + j]
-                j = j + 1
-            TIDRecord.append(int.from_bytes(tempbytearray, byteorder = 'big'))
-        # print("TIDRecord: ", TIDRecord)
-
-
     def addToTIDRecordArray2(self, TIDRecord, currentTID):
         # check if TIDs corresponding page is in bufferpool
         bufferpoolObj = BufferPool(self.table.num_columns)
         tailBinFileNeeded = "tailPageRange" + str(( (2**31)- currentTID - 1)  // 2048 + 1) + ".bin"
-        # print("tailbinfileneeded: ", tailBinFileNeeded)
-        # print("files: ", self.BufferpoolFiles)
         index = 0
         if (tailBinFileNeeded not in self.BufferpoolFiles):
 
@@ -387,23 +342,17 @@ class Query:
 
         else:
             index = self.BufferpoolFiles.index(tailBinFileNeeded)
-            # bufferpoolObj = self.bufferpool[index]
-            # print("here: " ,bufferpoolObj.contents)
         offset = 2047 - (currentTID % 2048)
         #do obaid's bytearray shite
         tempbyteArray = bytearray(4)
         for i in range(self.table.num_columns):
             j = 0
             while (j < 4):
-                # print("PLS: ",bufferpoolObj.contents)
-                # print(bufferpoolObj.contents[offset])
                 tempbyteArray[j] = self.bufferpool[index].contents[offset]
                 j = j + 1
                 offset = offset + 1
-            # print("TIDRecord element: ", int.from_bytes(   tempbyteArray, byteorder = 'big'))
             TIDRecord.append(int.from_bytes(tempbyteArray, byteorder = 'big'))
             tempbyteArray = bytearray(4)
-        # print("TIDREcord: ", TIDRecord)
 
 
 
@@ -440,7 +389,6 @@ class Query:
 
     def select(self, key, column, query_columns):
         listOfRecordObjects = []
-        # print(self.table.listOfIndexObj[column].keyToRIDList)
         if (key not in self.table.listOfIndexObj[column].keyToRIDList):
             print("inside select")
             return listOfRecordObjects
@@ -454,13 +402,9 @@ class Query:
 
             baseRecordsRID = RID
             self.addToRecordArray(key, record, RID)
-
-            # baseRecordsIndirection = self.getIndirectionFromBaseRecord(RID)
             baseRecordsIndirection = self.table.baseMetaData[0][RID]
 
             if (baseRecordsIndirection != 0):
-                # print("entered getLatestRecord")
-                # self.getLatestRecord(baseRecordsIndirection, record, baseRecordsRID)
                 self.getLatestRecord2(baseRecordsIndirection, record, baseRecordsRID)
 
             for i in range(self.table.num_columns):
@@ -471,8 +415,6 @@ class Query:
 
             recordObj = Record(baseRecordsRID, key, queryRecord)
             listOfRecordObjects.append(recordObj)
-
-        # print("listOfRecordObjects: ", listOfRecordObjects[0].columns)
 
         return listOfRecordObjects
 
@@ -497,7 +439,6 @@ class Query:
 
         indirectionPage = self.table.pageRangeArray[firstIndex][secondIndex][thirdIndex]
         indirection = self.obtainIndirection(indirectionPage, fourthIndex)
-#        print("indirection: ", indirection)
         return indirection
 
 
@@ -509,14 +450,12 @@ class Query:
 
 
     def reassignBaseRecordIndirection(self, baseRecordIndirectionPage, TIDCounter, baseRecordRID):
-#        print("TIDCounter: ", TIDCounter)
         offset = self.table.page_directory[baseRecordRID][3] # { 0: [0 0 0 0]}
         tempbytearray = (TIDCounter).to_bytes(4,'big')
         j = 0
         while (j < 4):
             baseRecordIndirectionPage.data[offset + j] = tempbytearray[j]
             j = j + 1
-#        print(baseRecordIndirectionPage.data)
     def addSchemaString(self, TIDSchemaPage, schemaString, offset):
         y = int(schemaString).to_bytes(4, byteorder = 'big')
         j = 0
@@ -526,15 +465,12 @@ class Query:
 
 
     def createTailBinFile(self):
-        # print("TID: ", self.table.TIDCounter)
         if ((self.table.TIDCounter % 2048 + 2) % 2048 == 1):
-            # print("got here in createTailBinFile")
             return 1
         return 0
 
     def makeNewTailBinFile(self):
         nameOfFile = "tailPageRange" + str(self.numTailBinFiles) + ".bin"
-        # print("making new bin file: ", nameOfFile)
         f = open(nameOfFile, "ab")
         return f
 
@@ -543,13 +479,8 @@ class Query:
             return 1
         tailBinFileNeeded = "tailPageRange" + str(( (2**31)- tailTID - 1)  // 2048 + 1) + ".bin"
 
-
-        # print("tail bin file: ", tailBinFileNeeded)
-
         if (tailBinFileNeeded not in self.BufferpoolFiles):
-            # print("returning 1")
             return 1
-        # print("returning 0")
         return 0
 
 
@@ -561,10 +492,8 @@ class Query:
         # sets current base record's indirection column equal to the TID of the latest tail record
         self.table.baseMetaData[0][RID] = self.table.TIDCounter
         if (indirColOfRID == 0):
-            # if base record hasn't been updated, just return RID
             return RID
         else:
-            # if it has been updated, return previous TID
             return indirColOfRID
 
     def assignTailSchema(self, columns):
@@ -580,7 +509,6 @@ class Query:
         indirection = self.assignTailIndirection(key)
         schema = self.assignTailSchema(columns)
         self.table.tailMetaData[0][self.table.TIDCounter] = indirection
-        # print("SCHEMA IS: ", schema)
         self.table.tailMetaData[1][self.table.TIDCounter] = schema
 
 
@@ -590,24 +518,11 @@ class Query:
     def addTailRecordTocopy(self, key, columns, copy):
         self.assignTailMetaData(key, columns) # indirection and schema columns placed in memory
         contentsToAdd = columns
-        # print(contentsToAdd)
-        # contentsToAdd = columns
 
         offset = 2047 - (self.table.TIDCounter % 2048)
-        #tempbytearray = bytearray(4)
         j = 0
 
-        #offset = 10
-        #tempbyteArray = (914143011).to_bytes(4, byteorder = 'big')
-        #while(j < 4):
-            #copy.contents[j] = tempbyteArray[j]
-            # j = j + 1
-            #copy.contents[j] = tempbyteArray[j]
-            #j = j + 1
-
-
         for attribute in contentsToAdd: # [none, 14, none, none, none]
-            # print("copy.contents ", copy.contents[0:32])
             if (attribute == None):
                 tempbytearray = (0).to_bytes(4, byteorder = 'big')
                 copy.contents += tempbytearray
@@ -616,30 +531,17 @@ class Query:
             tempbytearray = attribute.to_bytes(4, byteorder = 'big')
             i = 0
             copy.contents += tempbytearray
-            # print("temp: ", tempbytearray)
-            # print("HI HELLO WTF")
-            # print("offset: ", offset, " j: ", j)
-            # copy.contents[offset] = tempbytearray[j]
-            # copy.contents = copy.contents + tempbytearray
-
-            # print(copy.contents[0:16])
-
-        # print(copy.contents[0:32])
-        # print("attribute: ", contentsToAdd)
 
     """
     # Update a record with specified key and columns
     """
 
     def update(self, key, *columns): # 913151525, [None, 69 , None, None, None]
-        # print("entering update")
         self.globalTransactionsCount += 1
         self.table.keyToTID[key] = self.table.TIDCounter
         """ START Durable implementation """
 
         file = None
-        # print("TID: ", self.table.TIDCounter)
-
         if (self.createTailBinFile()):
             file = self.makeNewTailBinFile()
             self.numTailBinFiles += 1
@@ -648,33 +550,18 @@ class Query:
         bufferpoolObj = None
         index = 0
         if (self.tailrecordsPageNotInPool(self.table.TIDCounter)):
-            # print("ENTERING HERE")
-            # add empty bufferpool object to bufferpool
             bufferpoolObj = BufferPool(self.table.num_columns)
             bufferpoolObj.pin = 1
-            # bufferpoolObj.numTransactions = self.globalTransactionsCount
             """ SUS 1 """
             index = self.bringToBufferpool(bufferpoolObj, tailFileAdded)
-            # print("index: ", index)
-            # self.bufferpool[index].numTransactions = self.globalTransactionsCount
 
         else:
             index = self.BufferpoolFiles.index(tailFileAdded)
-            # self.bufferpool[index].numTransactions = self.globalTransactionsCount
             bufferpoolObj = self.bufferpool[index]
 
         self.bufferpool[index].numTransactions = self.globalTransactionsCount
-        # print("globalTransactionsCount : " +  str(self.globalTransactionsCount) + " index: " + str(index))
-
-        # print("bufferpoolObj: ", bufferpoolObj.contents)
-        """ SUS 3 """
-        # print(self.bufferpool[4].numTransactions)
-        # self.addTailRecordTocopy(key, columns, bufferpoolObj)
         self.addTailRecordTocopy(key, columns, self.bufferpool[index])
         """ bufferpoolObj not connected to bufferpool[0] """
-        # print("CONTENTS: ", self.bufferpool[0].contents)
-        # print("CONTENTS: ", bufferpoolObj.contents[0:32])
-        # print("here + ", bufferpoolObj.contents)
         bufferpoolObj.pin = 0
 
         """ END Durable implementation """
@@ -703,7 +590,6 @@ class Query:
                 schemaString += "0"
             else:
                 schemaString += "1"
-#        print("schemaString: ", schemaString)
         self.addSchemaString(TIDSchemaPage, schemaString, fourthIndex)
 
         IndirectionPage = 0
@@ -712,22 +598,10 @@ class Query:
         baseRecordsIndirection = self.getIndirectionFromBaseRecord(self.table.keyToRID[key])
         baseRecordsRID = self.table.keyToRID[key]
         baseRecordsIndirectionPage = self.obtainBaseRecordIndirectionPage(baseRecordsRID)
-
-        # if base record's indirection is null or 0, that means there isn't a tail record for it yet
-        # so this will be the first tail record for that base record
         if (baseRecordsIndirection == 0):
-            # change tail record's indirection to the base record's RID
-#             print("got here")
              self.addToByteArray(TIDIndirectionPage, fourthIndex, baseRecordsRID)
-
-        # else handle subsequent tail records if baseRecordsIndirection is != 0
         else:
-#            print("got into else")
-            # put base record indirection into tail's indirection column
             self.addToByteArray(TIDIndirectionPage, fourthIndex, baseRecordsIndirection)
-#        print("got out of else")
-        # update base record's indirection column to the tail record's TID
-#        print(baseRecordsIndirectionPage.data)
         self.reassignBaseRecordIndirection(baseRecordsIndirectionPage, TIDCounter, baseRecordsRID)
 
         #TODO: UPDATE BASE RECORD'S SCHEMA ENCODING
@@ -740,7 +614,6 @@ class Query:
             if (columns[i] != None):
                 attribute = columns[i]
                 thirdIndex = i + 4
-#                print("Tid: ", TIDCounter, " firstIndex: ", firstIndex, " secondINdex: ", secondIndex, " thirdIndex: ", thirdIndex, " fourthIndex: ", fourthIndex)
                 physicalPageToAdd = self.table.pageRangeArray2[firstIndex][secondIndex][thirdIndex]
                 self.addToByteArray(physicalPageToAdd, fourthIndex, attribute)
 
@@ -765,13 +638,6 @@ class Query:
     		columnToAdd = self.select(i, 0, [1, 1, 1, 1, 1])
     		if (len(columnToAdd) != 0):
     			summation += columnToAdd[0].columns[aggregate_column_index]
-    		# summation += columnToAdd
-
-
-
-
-
-
 
 
 

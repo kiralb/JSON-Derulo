@@ -106,4 +106,7 @@ class Table:
         bigPageArray.append(newPageRange)
 
     def __merge(self):
+        
+
+
         pass
