@@ -28,10 +28,11 @@ class Database():
 
     """
     def close(self):
-        globalPath = "/Users/BrianNguyen/Documents/GitHub/JSON-Derulo/ECS165/"
+        #globalPath = "/Users/BrianNguyen/Documents/GitHub/JSON-Derulo/ECS165/"
+        globalPath = os.getcwd()
         for i in range(len(self.tables)):
             path = self.tables[i].name + ".pkl"
-            f = open(globalPath + path, "wb")
+            f = open(globalPath + "/" + path, "wb")
             pickle.dump(self.tables[i] , f)
             f.close()
 
@@ -51,10 +52,12 @@ class Database():
     # Returns table with the passed name
     """
     def get_table(self, name):
-        globalPath = "/Users/BrianNguyen/Documents/GitHub/JSON-Derulo/ECS165/"
+        #globalPath = "/Users/BrianNguyen/Documents/GitHub/JSON-Derulo/ECS165/"
+        globalPath = os.getcwd() + "/ECS165"
         path = name + ".pkl"
+        path2 = name
         print(path)
-        f = open(globalPath + path, "rb")
+        f = open(globalPath + "/" +  path2 + "/"+ path, "rb")
         dict_x = pickle.load(f)
         print(dict_x)
         print(dict_x.num_columns)
