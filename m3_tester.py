@@ -29,7 +29,7 @@ transaction_workers = []
 for i in range(num_threads):
     transaction_workers.append(TransactionWorker())
 #
-for i in range(10):
+for i in range(10000):
     key = choice(keys)
     record = records[key]
     c = record[1]

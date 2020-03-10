@@ -1,5 +1,6 @@
 from template.table import Table, Record
 from template.index import Index
+import threading
 
 
 class Query:
@@ -9,6 +10,7 @@ class Query:
 
     def __init__(self, table):
         self.table = table
+        self.lock = threading.Lock()
         pass
 
     """
@@ -17,7 +19,6 @@ class Query:
     """
 
     def delete(self, key):
-
         RID = self.table.keyToRID[key]
 
         firstIndex = self.table.page_directory[RID][0]
@@ -140,8 +141,6 @@ class Query:
 
         # incrementing so we're not mapping to the same RID
         self.table.RIDCounter = self.table.RIDCounter + 1
-
-
         pass
 
     def addToRecordArray(self, key, record, rid):
@@ -203,7 +202,9 @@ class Query:
 
 
     def addToTIDRecordArray(self, TIDRecord, currentTID):
-        # print("currentTID: ", currentTID);
+        # if (currentTID not in self.table.page_directory2) :
+        #     print("this TID not found: ", currentTID)
+        # print("currentTID: ", currentTID)
         firstIndex = self.table.page_directory2[currentTID][0]
         secondIndex = self.table.page_directory2[currentTID][1]
         fourthIndex = self.table.page_directory2[currentTID][3]
@@ -226,6 +227,7 @@ class Query:
     def getLatestRecord(self, indirection, record, baseRID):
         currentTID = indirection
         TIDRecord = []
+        # print("TIDRECORD in getLatestRecord(): ", currentTID)
         self.addToTIDRecordArray(TIDRecord, currentTID)
         schemaIndexSet = "" # used later to check if schema index is in string
 
@@ -291,7 +293,6 @@ class Query:
             listOfRecordObjects.append(recordObj)
 
         # print("listOfRecordObjects: ", listOfRecordObjects[0].columns)
-
         return listOfRecordObjects
 
 
@@ -431,12 +432,12 @@ class Query:
     """
 
     def sum(self, start_range, end_range, aggregate_column_index):
-    	summation = 0
+        summation = 0
 
-    	for i in range(start_range, end_range + 1):
-    		columnToAdd = self.select(i, 0, [1, 1, 1, 1, 1])
-    		if (len(columnToAdd) != 0):
-    			summation += columnToAdd[0].columns[aggregate_column_index]
+        for i in range(start_range, end_range + 1):
+    	    columnToAdd = self.select(i, 0, [1, 1, 1, 1, 1])
+    	    if (len(columnToAdd) != 0):
+    		    summation += columnToAdd[0].columns[aggregate_column_index]
     		# summation += columnToAdd
 
 
@@ -446,9 +447,7 @@ class Query:
 
 
 
+        return summation
 
 
-    	return summation
-
-
-    	pass
+        pass
