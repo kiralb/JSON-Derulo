@@ -50,7 +50,7 @@ for thread in threads:
     thread.start()
 
 for thread in threads:
-    thread.wait()
+    thread.join()
 
 # num_committed_transactions = sum(t.result for t in transaction_workers)
 
