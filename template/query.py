@@ -1,8 +1,6 @@
 from template.table import Table, Record
 from template.index import Index
-from template.db import Database
-from template.bufferpool import BufferPool
-import os
+
 
 class Query:
     """
@@ -11,13 +9,6 @@ class Query:
 
     def __init__(self, table):
         self.table = table
-        self.chdirFlag = 0
-        self.bufferpoolSize = 0
-        self.bufferpool = []
-        self.BufferpoolFiles = [] # ["basePageRange1.bin", "tailPageRange1.bin"]
-        self.numBaseBinFiles = 1
-        self.numTailBinFiles = 1
-        self.globalTransactionsCount = 0
         pass
 
     """
@@ -26,19 +17,7 @@ class Query:
     """
 
     def delete(self, key):
-
-        RID = self.table.keyToRID[key]
-
-        firstIndex = self.table.page_directory[RID][0]
-        secondIndex = self.table.page_directory[RID][1]
-        fourthIndex = self.table.page_directory[RID][3]
-
-        for i in range(self.table.num_columns):
-            thirdIndex = i + 4
-            j = 0
-            while (j < 4):
-                self.table.pageRangeArray[firstIndex][secondIndex][thirdIndex].data[fourthIndex + j] = 0
-                j += 1
+        pass
 
     def mapRIDToIndices(self):
         arrayOfIndices = []
@@ -114,154 +93,12 @@ class Query:
 
 
 
+
     """
     # Insert a record with specified columns
     """
-    def createBinFile(self):
-        if (self.table.RIDCounter % 2048 == 1):
-            return 1
-        return 0
-
-    def makeNewBinFile(self):
-        nameOfFile = "basePageRange" + str(self.numBaseBinFiles) + ".bin"
-        f = open(nameOfFile, "ab")
-        return f
-
-    def recordsPageNotInPool(self, baseRID):
-        if (self.bufferpoolSize == 0):
-            return 1
-        baseBinFileNeeded = "basePageRange" + str(((baseRID - 1)// 2048) + 1) + ".bin"
-        if (baseBinFileNeeded not in self.BufferpoolFiles):
-            return 1
-        return 0
-
-    def makeCopyOfBinFileInPool(self, bufferpoolObj):
-        fileToCopy = "basePageRange" + str(((self.table.RIDCounter - 1)// 2048) + 1) + ".bin"
-        with open(fileToCopy, "rb") as binaryfile :
-            bufferpoolObj.contents = bytearray(binaryfile.read())
-
-
-    def addRecordTocopy(self, columns, copy):
-        contentsToAdd = columns
-
-        tempbytearray = bytearray(4)
-        for attribute in contentsToAdd:
-            if (attribute == None):
-                continue
-            tempbytearray = attribute.to_bytes(4, byteorder = 'big')
-            copy.contents = copy.contents + tempbytearray
-
-
-    def evictPage(self, leastRecentlyUsed, FilesArray, FileNamesArray, fileToGetEvictedByteArray, nameOfFileOfEvicted, nameOfReplacementFileByteArray):
-        x = leastRecentlyUsed
-        f = open(nameOfFileOfEvicted , "wb")
-        f.write(fileToGetEvictedByteArray)
-        f.close()
-
-        f = open(nameOfReplacementFileByteArray, "rb")
-        readingByteArray = f.read()
-        f.close()
-
-
-        self.bufferpool[x].contents = bytearray(readingByteArray)
-        FileNamesArray[x] = nameOfReplacementFileByteArray
-
-    def bringToBufferpool(self, bufferpoolObj, fileToAdd):
-        #if bufferpool not full, just add page from disk to bufferpool
-        if (self.bufferpoolSize != 5):
-            # print("globalTransactionsCount: ", self.globalTransactionsCount)
-            self.bufferpool.append(bufferpoolObj)
-            self.makeCopyOfBinFileInPool(bufferpoolObj)
-            # bufferpoolObj = bufferPoolObjToAdd
-            self.BufferpoolFiles.append(fileToAdd)
-            self.bufferpoolSize += 1
-            # print("files: ", self.BufferpoolFiles)
-            return self.bufferpoolSize - 1
-        # if it is full, need to evict a page using LRU
-        else:
-            leastRecentlyUsed = self.bufferpool[0].numTransactions
-            indexOfLeastRecentlyUsed = 0
-            for index, bufferpoolObject in enumerate(self.bufferpool):
-                # print("LRU: ", leastRecentlyUsed, " index: ", index)
-                if (self.bufferpool[index].numTransactions < leastRecentlyUsed):
-                    leastRecentlyUsed = bufferpoolObject.numTransactions
-                    indexOfLeastRecentlyUsed = index
-            # evict page here
-
-            filesArray = self.bufferpool
-            fileNamesArray = self.BufferpoolFiles
-            fileToGetEvictedByteArray = self.bufferpool[indexOfLeastRecentlyUsed].contents
-            nameOfFileOfEvicted = self.BufferpoolFiles[indexOfLeastRecentlyUsed]
-            nameOfReplacementFileByteArray = fileToAdd
-
-
-            self.evictPage(indexOfLeastRecentlyUsed, filesArray,
-                fileNamesArray, fileToGetEvictedByteArray, nameOfFileOfEvicted,
-                nameOfReplacementFileByteArray )
-            return indexOfLeastRecentlyUsed
-
-
-
 
     def insert(self, *columns):
-        # student ID matching with the RID
-        key = columns[0]
-        self.table.keyToRID[key] = self.table.RIDCounter
-
-        """ START of Durable Implentation """
-
-        self.globalTransactionsCount += 1
-        """ Add to bin files """
-        if (self.chdirFlag == 0):
-            os.chdir('ECS165/' + self.table.name)
-            self.chdirFlag = 1
-
-        file = None
-        if (self.createBinFile()):
-            file = self.makeNewBinFile()
-            self.numBaseBinFiles += 1
-
-
-        baseFileAdded = "basePageRange" + str(((self.table.RIDCounter - 1)// 2048) + 1) + ".bin"
-
-        bufferpoolObj = None
-        if (self.recordsPageNotInPool(self.table.RIDCounter)):
-            # add empty bufferpool object to bufferpool
-            bufferpoolObj = BufferPool(self.table.num_columns)
-            bufferpoolObj.pin = 1
-            # bufferpoolObj.numTransactions = self.globalTransactionsCount
-
-            index = self.bringToBufferpool(bufferpoolObj, baseFileAdded)
-            # self.bufferpool[index].numTransactions = self.globalTransactionsCount
-
-        else:
-            index = self.BufferpoolFiles.index(baseFileAdded)
-            bufferpoolObj = self.bufferpool[index]
-
-        self.bufferpool[index].numTransactions = self.globalTransactionsCount
-        # print("globalTransactionsCount: " +  str(self.globalTransactionsCount) + " index: " + str(index))
-
-        # print("bufferpoolObj: ", bufferpoolObj.contents)
-        self.addRecordTocopy(columns, bufferpoolObj)
-        bufferpoolObj.dirty = 1
-        bufferpoolObj.pin = 0
-
-        """ END Durable implementation """
-
-
-        # mapping base RID to what file it can be found in and at what offset in that file
-        offset = 4 * self.table.num_columns * (self.table.RIDCounter - 1)
-        self.table.baseRecordDirectory[self.table.RIDCounter] = [baseFileAdded, offset]
-
-        # initialize metadata columns
-        self.table.baseMetaData[0][self.table.RIDCounter] = 0 # map all RIDs indirection to 0
-        self.table.baseMetaData[1][self.table.RIDCounter] = '0' * self.table.num_columns # map all RIDs schema to 0
-
-
-
-        """ END of Durable Implentation """
-
-
 		#mapping will add to page_directory
 		# for example, adding RID = 0 will add
 		# page_directory = { 0: [0, 0, 0, 0] }
@@ -271,6 +108,8 @@ class Query:
         RIDCounter = self.table.RIDCounter
         self.insertIntoIndexObjects(columns)
         key = columns[0]
+        # student ID matching with the RID
+        self.table.keyToRID[key] = RIDCounter
         numColumns = self.table.num_columns + 4
         firstIndex = self.table.page_directory[RIDCounter][0]
         secondIndex = self.table.page_directory[RIDCounter][1]
@@ -278,13 +117,12 @@ class Query:
         RIDPage = 1
         if (self.addNewPageRange(secondIndex, fourthIndex)):
             self.table.addPageRange(self.table.pageRangeArray)
-
         RIDPhysicalPage = self.table.pageRangeArray[firstIndex][secondIndex][RIDPage]
         self.addToByteArray(RIDPhysicalPage, fourthIndex, RIDCounter)
-
         for i in range(numColumns - 4):
             attribute = columns[i]
             thirdIndex = i + 4
+#            print("rid: ", RIDCounter, " firstIndex: ", firstIndex, " secondINdex: ", secondIndex, " thirdIndex: ", thirdIndex, " fourthIndex: ", fourthIndex)
             physicalPageToAdd = self.table.pageRangeArray[firstIndex][secondIndex][thirdIndex]
             self.addToByteArray(physicalPageToAdd, fourthIndex, attribute)
 
@@ -310,6 +148,46 @@ class Query:
             attributeToAdd = (int).from_bytes(tempbytearray, byteorder = 'big')
             record.append(attributeToAdd)
 
+    def getTIDIndirection(self, currentTID):
+        firstIndex = self.table.page_directory2[currentTID][0]
+        secondIndex = self.table.page_directory2[currentTID][1]
+        thirdIndex = 0
+        fourthIndex = self.table.page_directory2[currentTID][3]
+        TIDIndirectionPage = self.table.pageRangeArray2[firstIndex][secondIndex][thirdIndex]
+
+        j = 0
+        tempbytearray = bytearray(4)
+        while (j < 4):
+            tempbytearray[j] = TIDIndirectionPage.data[fourthIndex + j]
+            j = j + 1
+#        print((int).from_bytes(tempbytearray, byteorder = 'big'))
+        return (int).from_bytes(tempbytearray, byteorder = 'big')
+
+
+    def getTIDsSchema(self, currentTID):
+        firstIndex = self.table.page_directory2[currentTID][0]
+        secondIndex = self.table.page_directory2[currentTID][1]
+        thirdIndex = 3
+        fourthIndex = self.table.page_directory2[currentTID][3]
+        TIDPage = self.table.pageRangeArray2[firstIndex][secondIndex][thirdIndex]
+
+        tempbytearray = bytearray(4)
+        j = 0
+        while (j < 4):
+            tempbytearray[j] = TIDPage.data[fourthIndex + j]
+            j = j + 1
+        return (int).from_bytes(tempbytearray, byteorder = 'big')
+
+
+    def putZerosInTheFront(self, number):
+        y = str(number)
+        i = 0
+        while (i < 5):
+            if (len(y) < 5):
+                y = "0" + y
+            i = i + 1
+
+        return y
 
 
     def addToTIDRecordArray(self, TIDRecord, currentTID):
@@ -330,55 +208,40 @@ class Query:
             TIDRecord.append(int.from_bytes(tempbytearray, byteorder = 'big'))
 
 
-    def addToTIDRecordArray2(self, TIDRecord, currentTID):
-        # check if TIDs corresponding page is in bufferpool
-        bufferpoolObj = BufferPool(self.table.num_columns)
-        tailBinFileNeeded = "tailPageRange" + str(( (2**31)- currentTID - 1)  // 2048 + 1) + ".bin"
-        index = 0
-        if (tailBinFileNeeded not in self.BufferpoolFiles):
-
-            index = self.bringToBufferpool(bufferpoolObj, tailBinFileNeeded)
-            print("replacing at bufferpool index: ", index)
-
-        else:
-            index = self.BufferpoolFiles.index(tailBinFileNeeded)
-        offset = 2047 - (currentTID % 2048)
-        #do obaid's bytearray shite
-        tempbyteArray = bytearray(4)
-        for i in range(self.table.num_columns):
-            j = 0
-            while (j < 4):
-                tempbyteArray[j] = self.bufferpool[index].contents[offset]
-                j = j + 1
-                offset = offset + 1
-            TIDRecord.append(int.from_bytes(tempbyteArray, byteorder = 'big'))
-            tempbyteArray = bytearray(4)
 
 
 
-    def getLatestRecord2(self, indirection, record, baseRID):
-        # print("got here in getLatestRecord2")
+    def getLatestRecord(self, indirection, record, baseRID):
         currentTID = indirection
         TIDRecord = []
         self.addToTIDRecordArray(TIDRecord, currentTID)
-        schemaIndexSet = ""
-        # whichSchema = -1
-        while (self.table.tailMetaData[0][currentTID] != baseRID):
-            TIDSchema = self.table.tailMetaData[1][currentTID]
-            for i in range(len(TIDSchema)):
-                if (TIDSchema[i] == "1"):
+        schemaIndexSet = "" # used later to check if schema index is in string
+
+        while (self.getTIDIndirection(currentTID) != baseRID):
+            TIDSchema = self.getTIDsSchema(currentTID)
+            schema = self.putZerosInTheFront(TIDSchema)
+#            print("TIDRecord: ", TIDRecord," schema: ", schema)
+            for i in range(len(schema)):
+                if (schema[i] == "1"):
                     if (str(i) not in schemaIndexSet):
                         schemaIndexSet += str(i)
                         record[i] = TIDRecord[i]
-            currentTID = self.table.tailMetaData[0][currentTID]
+            currentTID = self.getTIDIndirection(currentTID)
             TIDRecord = []
             self.addToTIDRecordArray(TIDRecord, currentTID)
-        TIDSchema = self.table.tailMetaData[1][currentTID]
-        for i in range(len(TIDSchema)):
-            if (TIDSchema[i] == "1"):
+        TIDSchema = self.getTIDsSchema(currentTID)
+        schema = self.putZerosInTheFront(TIDSchema)
+        for i in range(len(schema)):
+            if (schema[i] == "1"):
                 if (str(i) not in schemaIndexSet):
                     schemaIndexSet += str(i)
                     record[i] = TIDRecord[i]
+
+
+#        print("TID Record: ", TIDRecord)
+#        print("record final: ", record)
+
+
 
 
     """
@@ -390,22 +253,21 @@ class Query:
     def select(self, key, column, query_columns):
         listOfRecordObjects = []
         if (key not in self.table.listOfIndexObj[column].keyToRIDList):
-            print("inside select")
             return listOfRecordObjects
 
         listOfRIDsToSelect = self.table.listOfIndexObj[column].keyToRIDList[key]
         for RID in listOfRIDsToSelect:
-
             # add to original data to record array
             record = []
             queryRecord = []
 
             baseRecordsRID = RID
             self.addToRecordArray(key, record, RID)
-            baseRecordsIndirection = self.table.baseMetaData[0][RID]
+
+            baseRecordsIndirection = self.getIndirectionFromBaseRecord(RID)
 
             if (baseRecordsIndirection != 0):
-                self.getLatestRecord2(baseRecordsIndirection, record, baseRecordsRID)
+                self.getLatestRecord(baseRecordsIndirection, record, baseRecordsRID)
 
             for i in range(self.table.num_columns):
                 if (query_columns[i] == 1):
@@ -416,7 +278,13 @@ class Query:
             recordObj = Record(baseRecordsRID, key, queryRecord)
             listOfRecordObjects.append(recordObj)
 
+        # print("listOfRecordObjects: ", listOfRecordObjects[0].columns)
+
         return listOfRecordObjects
+
+
+
+
 
 
 
@@ -439,6 +307,7 @@ class Query:
 
         indirectionPage = self.table.pageRangeArray[firstIndex][secondIndex][thirdIndex]
         indirection = self.obtainIndirection(indirectionPage, fourthIndex)
+#        print("indirection: ", indirection)
         return indirection
 
 
@@ -450,12 +319,14 @@ class Query:
 
 
     def reassignBaseRecordIndirection(self, baseRecordIndirectionPage, TIDCounter, baseRecordRID):
+#        print("TIDCounter: ", TIDCounter)
         offset = self.table.page_directory[baseRecordRID][3] # { 0: [0 0 0 0]}
         tempbytearray = (TIDCounter).to_bytes(4,'big')
         j = 0
         while (j < 4):
             baseRecordIndirectionPage.data[offset + j] = tempbytearray[j]
             j = j + 1
+#        print(baseRecordIndirectionPage.data)
     def addSchemaString(self, TIDSchemaPage, schemaString, offset):
         y = int(schemaString).to_bytes(4, byteorder = 'big')
         j = 0
@@ -464,112 +335,14 @@ class Query:
             j = j + 1
 
 
-    def createTailBinFile(self):
-        if ((self.table.TIDCounter % 2048 + 2) % 2048 == 1):
-            return 1
-        return 0
-
-    def makeNewTailBinFile(self):
-        nameOfFile = "tailPageRange" + str(self.numTailBinFiles) + ".bin"
-        f = open(nameOfFile, "ab")
-        return f
-
-    def tailrecordsPageNotInPool(self, tailTID):
-        if (self.bufferpoolSize == 0):
-            return 1
-        tailBinFileNeeded = "tailPageRange" + str(( (2**31)- tailTID - 1)  // 2048 + 1) + ".bin"
-
-        if (tailBinFileNeeded not in self.BufferpoolFiles):
-            return 1
-        return 0
-
-
-    def assignTailIndirection(self, key):
-        RID = self.table.keyToRID[key]
-        indirColOfRID = self.table.baseMetaData[0][RID]
-
-
-        # sets current base record's indirection column equal to the TID of the latest tail record
-        self.table.baseMetaData[0][RID] = self.table.TIDCounter
-        if (indirColOfRID == 0):
-            return RID
-        else:
-            return indirColOfRID
-
-    def assignTailSchema(self, columns):
-        schemaString = ""
-        for i in range(len(columns)):
-            if (columns[i] == None):
-                schemaString += "0"
-            else:
-                schemaString += "1"
-        return schemaString
-
-    def assignTailMetaData(self, key, columns):
-        indirection = self.assignTailIndirection(key)
-        schema = self.assignTailSchema(columns)
-        self.table.tailMetaData[0][self.table.TIDCounter] = indirection
-        self.table.tailMetaData[1][self.table.TIDCounter] = schema
-
-
-
-
-
-    def addTailRecordTocopy(self, key, columns, copy):
-        self.assignTailMetaData(key, columns) # indirection and schema columns placed in memory
-        contentsToAdd = columns
-
-        offset = 2047 - (self.table.TIDCounter % 2048)
-        j = 0
-
-        for attribute in contentsToAdd: # [none, 14, none, none, none]
-            if (attribute == None):
-                tempbytearray = (0).to_bytes(4, byteorder = 'big')
-                copy.contents += tempbytearray
-                continue
-
-            tempbytearray = attribute.to_bytes(4, byteorder = 'big')
-            i = 0
-            copy.contents += tempbytearray
-
     """
     # Update a record with specified key and columns
     """
 
     def update(self, key, *columns): # 913151525, [None, 69 , None, None, None]
-        self.globalTransactionsCount += 1
-        self.table.keyToTID[key] = self.table.TIDCounter
-        """ START Durable implementation """
-
-        file = None
-        if (self.createTailBinFile()):
-            file = self.makeNewTailBinFile()
-            self.numTailBinFiles += 1
-        tailFileAdded = "tailPageRange" + str(((2**31)- self.table.TIDCounter - 1)  // 2048 + 1) + ".bin"
-
-        bufferpoolObj = None
-        index = 0
-        if (self.tailrecordsPageNotInPool(self.table.TIDCounter)):
-            bufferpoolObj = BufferPool(self.table.num_columns)
-            bufferpoolObj.pin = 1
-            """ SUS 1 """
-            index = self.bringToBufferpool(bufferpoolObj, tailFileAdded)
-
-        else:
-            index = self.BufferpoolFiles.index(tailFileAdded)
-            bufferpoolObj = self.bufferpool[index]
-
-        self.bufferpool[index].numTransactions = self.globalTransactionsCount
-        self.addTailRecordTocopy(key, columns, self.bufferpool[index])
-        """ bufferpoolObj not connected to bufferpool[0] """
-        bufferpoolObj.pin = 0
-
-        """ END Durable implementation """
-
-
-
         TIDCounter = self.table.TIDCounter
         self.mapTIDToIndices()
+        self.table.keyToTID[key] = TIDCounter
 #        print(TIDCounter)
         numColumns = self.table.num_columns + 4
         firstIndex = self.table.page_directory2[TIDCounter][0]
@@ -590,6 +363,7 @@ class Query:
                 schemaString += "0"
             else:
                 schemaString += "1"
+#        print("schemaString: ", schemaString)
         self.addSchemaString(TIDSchemaPage, schemaString, fourthIndex)
 
         IndirectionPage = 0
@@ -598,10 +372,22 @@ class Query:
         baseRecordsIndirection = self.getIndirectionFromBaseRecord(self.table.keyToRID[key])
         baseRecordsRID = self.table.keyToRID[key]
         baseRecordsIndirectionPage = self.obtainBaseRecordIndirectionPage(baseRecordsRID)
+
+        # if base record's indirection is null or 0, that means there isn't a tail record for it yet
+        # so this will be the first tail record for that base record
         if (baseRecordsIndirection == 0):
+            # change tail record's indirection to the base record's RID
+#             print("got here")
              self.addToByteArray(TIDIndirectionPage, fourthIndex, baseRecordsRID)
+
+        # else handle subsequent tail records if baseRecordsIndirection is != 0
         else:
+#            print("got into else")
+            # put base record indirection into tail's indirection column
             self.addToByteArray(TIDIndirectionPage, fourthIndex, baseRecordsIndirection)
+#        print("got out of else")
+        # update base record's indirection column to the tail record's TID
+#        print(baseRecordsIndirectionPage.data)
         self.reassignBaseRecordIndirection(baseRecordsIndirectionPage, TIDCounter, baseRecordsRID)
 
         #TODO: UPDATE BASE RECORD'S SCHEMA ENCODING
@@ -614,6 +400,7 @@ class Query:
             if (columns[i] != None):
                 attribute = columns[i]
                 thirdIndex = i + 4
+#                print("Tid: ", TIDCounter, " firstIndex: ", firstIndex, " secondINdex: ", secondIndex, " thirdIndex: ", thirdIndex, " fourthIndex: ", fourthIndex)
                 physicalPageToAdd = self.table.pageRangeArray2[firstIndex][secondIndex][thirdIndex]
                 self.addToByteArray(physicalPageToAdd, fourthIndex, attribute)
 
@@ -638,6 +425,13 @@ class Query:
     		columnToAdd = self.select(i, 0, [1, 1, 1, 1, 1])
     		if (len(columnToAdd) != 0):
     			summation += columnToAdd[0].columns[aggregate_column_index]
+    		# summation += columnToAdd
+
+
+
+
+
+
 
 
 
@@ -646,20 +440,3 @@ class Query:
 
 
     	pass
-
-    """
-    incremenets one column of the record
-    this implementation should work if your select and update queries already work
-    :param key: the primary of key of the record to increment
-    :param column: the column to increment
-    # Returns True is increment is successful
-    # Returns False if no record matches key or if target record is locked by 2PL.
-    """
-    def increment(self, key, column):
-        r = self.select(key, self.table.key, [1] * self.table.num_columns)[0]
-        if r is not False:
-            updated_columns = [None] * self.table.num_columns
-            updated_columns[column] = r[column] + 1
-            u = self.update(key, *updated_columns)
-            return u
-        return False
