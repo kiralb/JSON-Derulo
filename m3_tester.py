@@ -4,6 +4,7 @@ from template.transaction import Transaction
 from template.transaction_worker import TransactionWorker
 
 from random import choice, randint, sample, seed
+from threading import Thread, Lock
 
 db = Database()
 db.open('~/ECS165')
@@ -27,9 +28,9 @@ transactions = []
 transaction_workers = []
 for i in range(num_threads):
     transaction_workers.append(TransactionWorker())
-
-for i in range(10000):
-    key = random.choice(keys)
+#
+for i in range(10):
+    key = choice(keys)
     record = records[key]
     c = record[1]
     transaction = Transaction()
@@ -40,17 +41,17 @@ for i in range(10000):
         q = Query(grades_table)
         transaction.add_query(q.update, key, *[None, c, None, None, None])
     transaction_workers[i % num_threads].add_transaction(transaction)
-
+#
 threads = []
 for transaction_worker in transaction_workers:
-    threads.append(threading.Thread(transaction_worker.run, args = ()))
+    threads.append(Thread(target=transaction_worker.run))
+# 
+# for thread in threads:
+#     thread.start()
 
-for thread in threads:
-    thread.start()
-
-for thread in threads:
-    thread.wait()
-
-num_committed_transactions = sum(t.result for t in transaction_workers)
+# for thread in threads:
+#     thread.wait()
+#
+# num_committed_transactions = sum(t.result for t in transaction_workers)
 
 db.close()

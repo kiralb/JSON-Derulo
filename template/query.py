@@ -30,7 +30,7 @@ class Query:
             while (j < 4):
                 self.table.pageRangeArray[firstIndex][secondIndex][thirdIndex].data[fourthIndex + j] = 0
                 j += 1
-                
+
     def mapRIDToIndices(self):
         arrayOfIndices = []
         firstIndex = (self.table.RIDCounter - 1) // 2048 # 1
@@ -203,11 +203,11 @@ class Query:
 
 
     def addToTIDRecordArray(self, TIDRecord, currentTID):
+        # print("currentTID: ", currentTID);
         firstIndex = self.table.page_directory2[currentTID][0]
         secondIndex = self.table.page_directory2[currentTID][1]
         fourthIndex = self.table.page_directory2[currentTID][3]
         numColumns = self.table.num_columns + 4
-
         for i in range(numColumns - 4):
             thirdIndex = i + 4
             physicalPage = self.table.pageRangeArray2[firstIndex][secondIndex][thirdIndex]
