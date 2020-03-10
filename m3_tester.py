@@ -45,13 +45,13 @@ for i in range(10):
 threads = []
 for transaction_worker in transaction_workers:
     threads.append(Thread(target=transaction_worker.run))
-# 
-# for thread in threads:
-#     thread.start()
 
-# for thread in threads:
-#     thread.wait()
-#
+for thread in threads:
+    thread.start()
+
+for thread in threads:
+    thread.wait()
+
 # num_committed_transactions = sum(t.result for t in transaction_workers)
 
 db.close()
