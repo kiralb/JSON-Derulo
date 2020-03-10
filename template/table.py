@@ -27,14 +27,14 @@ class Table:
         """
         Create a folder with the name of the table in ECS165
         """
-        path = 'ECS165/' + name
-
-        try:
-            os.mkdir(path)
-        except OSError:
-            print("creation of dir", path, "already exists")
-        else:
-            print("creation of dir ", path, "passed")
+        # path = 'ECS165/' + name
+        #
+        # try:
+        #     os.mkdir(path)
+        # except OSError:
+        #     print("creation of dir", path, "already exists")
+        # else:
+        #     print("creation of dir ", path, "passed")
 
         pass
 
@@ -106,7 +106,7 @@ class Table:
         bigPageArray.append(newPageRange)
 
     def __merge(self):
-        
+
 
 
         pass
