@@ -17,8 +17,20 @@ class Query:
     """
 
     def delete(self, key):
-        pass
 
+        RID = self.table.keyToRID[key]
+
+        firstIndex = self.table.page_directory[RID][0]
+        secondIndex = self.table.page_directory[RID][1]
+        fourthIndex = self.table.page_directory[RID][3]
+
+        for i in range(self.table.num_columns):
+            thirdIndex = i + 4
+            j = 0
+            while (j < 4):
+                self.table.pageRangeArray[firstIndex][secondIndex][thirdIndex].data[fourthIndex + j] = 0
+                j += 1
+                
     def mapRIDToIndices(self):
         arrayOfIndices = []
         firstIndex = (self.table.RIDCounter - 1) // 2048 # 1
