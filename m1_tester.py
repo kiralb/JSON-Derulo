@@ -34,35 +34,35 @@ for key in records:
     else:
         print('select on', key, ':', record.columns)
 
-# for key in records:
-#     updated_columns = [None, None, None, None, None]
-#     for i in range(1, grades_table.num_columns):
-#         value = randint(0, 20)
-#         updated_columns[i] = value
-#         original = records[key].copy()
-#         records[key][i] = value
-#         query.update(key, *updated_columns)
-#         record = query.select(key, 0, [1, 1, 1, 1, 1])[0]
-#         error = False
-#         for j, column in enumerate(record.columns):
-#             if column != records[key][j]:
-#                 error = True
-#         if error:
-#             pass
-#             # print('update error on', original, 'and', updated_columns, ':', record, ', correct:', records[key])
-#         else:
-#             pass
-#             # print('update on', original, 'and', updated_columns, ':', record)
-#         updated_columns[i] = None
+for key in records:
+    updated_columns = [None, None, None, None, None]
+    for i in range(1, grades_table.num_columns):
+        value = randint(0, 20)
+        updated_columns[i] = value
+        original = records[key].copy()
+        records[key][i] = value
+        query.update(key, *updated_columns)
+        record = query.select(key, 0, [1, 1, 1, 1, 1])[0]
+        error = False
+        for j, column in enumerate(record.columns):
+            if column != records[key][j]:
+                error = True
+        if error:
+            pass
+            # print('update error on', original, 'and', updated_columns, ':', record, ', correct:', records[key])
+        else:
+            pass
+            # print('update on', original, 'and', updated_columns, ':', record)
+        updated_columns[i] = None
 
-# keys = sorted(list(records.keys()))
-# for c in range(0, grades_table.num_columns):
-#     for i in range(0, 20):
-#         r = sorted(sample(range(0, len(keys)), 2))
-#         column_sum = sum(map(lambda key: records[key][c], keys[r[0]: r[1] + 1]))
-#         result = query.sum(keys[r[0]], keys[r[1]], c)
-#         if column_sum != result:
-#             print('sum error on [', keys[r[0]], ',', keys[r[1]], ']: ', result, ', correct: ', column_sum)
-#         else:
-#             print('sum on [', keys[r[0]], ',', keys[r[1]], ']: ', column_sum)
+keys = sorted(list(records.keys()))
+for c in range(0, grades_table.num_columns):
+    for i in range(0, 20):
+        r = sorted(sample(range(0, len(keys)), 2))
+        column_sum = sum(map(lambda key: records[key][c], keys[r[0]: r[1] + 1]))
+        result = query.sum(keys[r[0]], keys[r[1]], c)
+        if column_sum != result:
+            print('sum error on [', keys[r[0]], ',', keys[r[1]], ']: ', result, ', correct: ', column_sum)
+        else:
+            print('sum on [', keys[r[0]], ',', keys[r[1]], ']: ', column_sum)
 # print("printing bufferpool: ", query.bufferpool[1].contents)

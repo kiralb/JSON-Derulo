@@ -29,7 +29,7 @@ transaction_workers = []
 for i in range(num_threads):
     transaction_workers.append(TransactionWorker())
 #
-for i in range(10000):
+for i in range(10):
     key = choice(keys)
     record = records[key]
     c = record[1]
@@ -52,6 +52,7 @@ for thread in threads:
 for thread in threads:
     thread.join()
 
-# num_committed_transactions = sum(t.result for t in transaction_workers)
+num_committed_transactions = sum(t.result for t in transaction_workers)
+print("num_committed_transactions: ", num_committed_transactions)
 
 db.close()
