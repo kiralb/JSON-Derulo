@@ -160,6 +160,7 @@ class Query:
             record.append(attributeToAdd)
 
     def getTIDIndirection(self, currentTID):
+        self.lock.acquire()
         firstIndex = self.table.page_directory2[currentTID][0]
         secondIndex = self.table.page_directory2[currentTID][1]
         thirdIndex = 0
@@ -172,6 +173,7 @@ class Query:
             tempbytearray[j] = TIDIndirectionPage.data[fourthIndex + j]
             j = j + 1
 #        print((int).from_bytes(tempbytearray, byteorder = 'big'))
+        self.lock.release()
         return (int).from_bytes(tempbytearray, byteorder = 'big')
 
 
@@ -202,9 +204,10 @@ class Query:
 
 
     def addToTIDRecordArray(self, TIDRecord, currentTID):
-        if (currentTID not in self.table.page_directory2) :
-            print("this TID not found: ", currentTID)
-        # print("currentTID: ", currentTID)
+        # if (currentTID not in self.table.page_directory2) :
+        #     print("this TID not found: ", currentTID)
+        print("currentTID: ", currentTID)
+        # print("currentRID: ", self.table.RIDCounter)
         firstIndex = self.table.page_directory2[currentTID][0]
         secondIndex = self.table.page_directory2[currentTID][1]
         fourthIndex = self.table.page_directory2[currentTID][3]
@@ -229,6 +232,7 @@ class Query:
         TIDRecord = []
         # print("TIDRECORD in getLatestRecord(): ", currentTID)
         self.addToTIDRecordArray(TIDRecord, currentTID)
+        # print("baseRID1: ", baseRID)
         schemaIndexSet = "" # used later to check if schema index is in string
 
         while (self.getTIDIndirection(currentTID) != baseRID):
@@ -243,6 +247,7 @@ class Query:
             currentTID = self.getTIDIndirection(currentTID)
             TIDRecord = []
             self.addToTIDRecordArray(TIDRecord, currentTID)
+            # print("baseRID2: ", baseRID)
         TIDSchema = self.getTIDsSchema(currentTID)
         schema = self.putZerosInTheFront(TIDSchema)
         for i in range(len(schema)):
@@ -439,11 +444,6 @@ class Query:
     	    if (len(columnToAdd) != 0):
     		    summation += columnToAdd[0].columns[aggregate_column_index]
     		# summation += columnToAdd
-
-
-
-
-
 
 
 
