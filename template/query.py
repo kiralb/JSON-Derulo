@@ -160,7 +160,7 @@ class Query:
             record.append(attributeToAdd)
 
     def getTIDIndirection(self, currentTID):
-        self.lock.acquire()
+        # self.lock.acquire()
         firstIndex = self.table.page_directory2[currentTID][0]
         secondIndex = self.table.page_directory2[currentTID][1]
         thirdIndex = 0
@@ -172,8 +172,8 @@ class Query:
         while (j < 4):
             tempbytearray[j] = TIDIndirectionPage.data[fourthIndex + j]
             j = j + 1
-#        print((int).from_bytes(tempbytearray, byteorder = 'big'))
-        self.lock.release()
+       # print((int).from_bytes(tempbytearray, byteorder = 'big'))
+        # self.lock.release()
         return (int).from_bytes(tempbytearray, byteorder = 'big')
 
 
@@ -206,7 +206,7 @@ class Query:
     def addToTIDRecordArray(self, TIDRecord, currentTID):
         # if (currentTID not in self.table.page_directory2) :
         #     print("this TID not found: ", currentTID)
-        print("currentTID: ", currentTID)
+        # print("currentTID: ", currentTID)
         # print("currentRID: ", self.table.RIDCounter)
         firstIndex = self.table.page_directory2[currentTID][0]
         secondIndex = self.table.page_directory2[currentTID][1]
@@ -244,7 +244,9 @@ class Query:
                     if (str(i) not in schemaIndexSet):
                         schemaIndexSet += str(i)
                         record[i] = TIDRecord[i]
+
             currentTID = self.getTIDIndirection(currentTID)
+
             TIDRecord = []
             self.addToTIDRecordArray(TIDRecord, currentTID)
             # print("baseRID2: ", baseRID)
@@ -255,7 +257,6 @@ class Query:
                 if (str(i) not in schemaIndexSet):
                     schemaIndexSet += str(i)
                     record[i] = TIDRecord[i]
-
 
 #        print("TID Record: ", TIDRecord)
 #        print("record final: ", record)
@@ -462,9 +463,12 @@ class Query:
     """
     def increment(self, key, column):
         r = self.select(key, self.table.key, [1] * self.table.num_columns)[0]
+        print("before increment: ", r.columns)
         if r is not False:
             updated_columns = [None] * self.table.num_columns
             updated_columns[column] = r.columns[column] + 1
             u = self.update(key, *updated_columns)
+            r = self.select(key, self.table.key, [1] * self.table.num_columns)[0]
+            print("after increment: ", r.columns)
             return u
         return False

@@ -2,6 +2,7 @@ from template.db import Database
 from template.query import Query
 from template.transaction import Transaction
 from template.transaction_worker import TransactionWorker
+from template.queCC import QueCC
 
 import threading
 from random import choice, randint, sample, seed
@@ -9,10 +10,11 @@ from random import choice, randint, sample, seed
 db = Database()
 db.open('/home/pkhorsand/165a-winter-2020-private/db')
 grades_table = db.create_table('Grades', 5, 0)
+quecc = QueCC()
 
 keys = []
 records = {}
-num_threads = 8
+num_threads = 1
 seed(8739878934)
 
 # Generate random records
@@ -26,7 +28,7 @@ for i in range(0, 10000):
 # create TransactionWorkers
 transaction_workers = []
 for i in range(num_threads):
-    transaction_workers.append(TransactionWorker([]))
+    transaction_workers.append(TransactionWorker(grades_table, i, quecc , []))
 
 # generates 10k random transactions
 # each transaction will increment the first column of a record 5 times
@@ -40,7 +42,7 @@ for i in range(1000):
         q = Query(grades_table)
         transaction.add_query(q.increment, key, 1)
     transaction_workers[i % num_threads].add_transaction(transaction)
-
+print("num transactions for worker1: ", len(transaction_workers[0].transactions))
 threads = []
 for transaction_worker in transaction_workers:
     threads.append(threading.Thread(target = transaction_worker.run, args = ()))
@@ -58,8 +60,8 @@ print(num_committed_transactions, 'transaction committed.')
 
 query = Query(grades_table)
 s = query.sum(keys[0], keys[-1], 1)
-
+# print("keys[0]: ", keys[0], " keys[-1]: ",keys[-1])
 if s != num_committed_transactions * 5:
     print('Expected sum:', num_committed_transactions * 5, ', actual:', s, '. Failed.')
 else:
-    print('Pass.')
+    print('Pass. sum: ', num_committed_transactions * 5)
