@@ -1,6 +1,7 @@
 from template.table import Table, Record
 from template.index import Index
 import threading
+import time
 
 
 class Query:
@@ -206,6 +207,7 @@ class Query:
     def addToTIDRecordArray(self, TIDRecord, currentTID):
         # if (currentTID not in self.table.page_directory2) :
         #     print("this TID not found: ", currentTID)
+        # print(" ")
         # print("currentTID: ", currentTID)
         # print("currentRID: ", self.table.RIDCounter)
         firstIndex = self.table.page_directory2[currentTID][0]
@@ -230,6 +232,7 @@ class Query:
     def getLatestRecord(self, indirection, record, baseRID):
         currentTID = indirection
         TIDRecord = []
+        time.sleep(0.000001)
         # print("TIDRECORD in getLatestRecord(): ", currentTID)
         self.addToTIDRecordArray(TIDRecord, currentTID)
         # print("baseRID1: ", baseRID)
@@ -442,6 +445,7 @@ class Query:
 
         for i in range(start_range, end_range + 1):
     	    columnToAdd = self.select(i, 0, [1, 1, 1, 1, 1])
+            # print("columnToAdd: ", columnToAdd)
     	    if (len(columnToAdd) != 0):
     		    summation += columnToAdd[0].columns[aggregate_column_index]
     		# summation += columnToAdd
@@ -453,6 +457,7 @@ class Query:
 
         pass
 
+
     """
     incremenets one column of the record
     this implementation should work if your select and update queries already work
@@ -463,12 +468,12 @@ class Query:
     """
     def increment(self, key, column):
         r = self.select(key, self.table.key, [1] * self.table.num_columns)[0]
-        print("before increment: ", r.columns)
+        # print("before increment: ", r.columns)
         if r is not False:
             updated_columns = [None] * self.table.num_columns
             updated_columns[column] = r.columns[column] + 1
             u = self.update(key, *updated_columns)
             r = self.select(key, self.table.key, [1] * self.table.num_columns)[0]
-            print("after increment: ", r.columns)
+            # print("after increment: ", r.columns)
             return u
         return False

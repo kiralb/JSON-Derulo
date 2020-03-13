@@ -14,7 +14,7 @@ quecc = QueCC()
 
 keys = []
 records = {}
-num_threads = 1
+num_threads = 4
 seed(8739878934)
 
 # Generate random records
@@ -42,7 +42,7 @@ for i in range(1000):
         q = Query(grades_table)
         transaction.add_query(q.increment, key, 1)
     transaction_workers[i % num_threads].add_transaction(transaction)
-print("num transactions for worker1: ", len(transaction_workers[0].transactions))
+# print("num transactions for worker1: ", len(transaction_workers[0].transactions))
 threads = []
 for transaction_worker in transaction_workers:
     threads.append(threading.Thread(target = transaction_worker.run, args = ()))

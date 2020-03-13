@@ -28,7 +28,7 @@ class TransactionWorker:
         RID = self.table.keyToRID[key]
         column = RID // 2501
         row = self.transactionWorkerNum
-        print("query: ", query[0] ," RID: ", RID, "row: ", self.transactionWorkerNum, " column: ", column )
+        # print("query: ", query[0] ," RID: ", RID, "row: ", self.transactionWorkerNum, " column: ", column )
         self.quecc.setsOfQueues[row][column].put(query)
 
 
@@ -49,13 +49,15 @@ class TransactionWorker:
                 # print("query: ", query)
                 # sort queries into the 16 queues
                 self.sortIntoQueue(query)
-
         # execute priority queues
         while (self.queuesExecuted != 4):
             queueToExecute = self.quecc.setsOfQueues[self.queuesExecuted][self.transactionWorkerNum]
+            # print("GOT HERE 1")
             while not (queueToExecute.empty()):
+                # print("GOT HERE 2")
                 query, args = queueToExecute.get()
-                result = query(*args)
+                # print("query: ", query, " args: ", args)
+                query(*args)
 
             self.queuesExecuted += 1
 
