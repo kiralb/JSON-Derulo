@@ -444,9 +444,9 @@ class Query:
 
     def sum(self, start_range, end_range, aggregate_column_index):
         summation = 0
-
         for i in range(start_range, end_range + 1):
     	    columnToAdd = self.select(i, 0, [1, 1, 1, 1, 1])
+            print("columnToAdd: ", columnToAdd[0].columns)
             # print("columnToAdd: ", columnToAdd)
     	    if (len(columnToAdd) != 0):
     		    summation += columnToAdd[0].columns[aggregate_column_index]
@@ -470,10 +470,13 @@ class Query:
     """
     def increment(self, key, column):
         r = self.select(key, self.table.key, [1] * self.table.num_columns)[0]
-        # print("before increment: ", r.columns)
+        print("before increment: ", r.columns)
         if r is not False:
             updated_columns = [None] * self.table.num_columns
             updated_columns[column] = r.columns[column] + 1
             u = self.update(key, *updated_columns)
+            x = self.select(key, self.table.key, [1] * self.table.num_columns)[0]
+            print("after increment: ", x.columns)
+            print("\n")
             return u
         return False
