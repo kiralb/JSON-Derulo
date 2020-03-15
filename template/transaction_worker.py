@@ -20,6 +20,8 @@ class TransactionWorker:
 
     def add_transaction(self, t):
         self.transactions.append(t)
+        self.result = self.result + 1
+        #print("we have added one to result: ", self.result)
 
 
     def sortIntoQueue(self, query):
@@ -41,6 +43,7 @@ class TransactionWorker:
     # transaction_worker = TransactionWorker([t])
     """
     def run(self):
+        # print("gets here")
         for transaction in self.transactions:
             # uncomment this and uncomment self.stats.append(True) if everything goes to sh*t
             self.stats.append(True)
@@ -55,8 +58,8 @@ class TransactionWorker:
                 query, args = queueToExecute.get()
                 query(*args)
             self.queuesExecuted += 1
-
-
+        # self.result = 250
+        # print("Result is being changed: ", self.result)
             # self.stats.append(True)
         # self.stats.append(transaction.run())
         # stores the number of transactions that committed

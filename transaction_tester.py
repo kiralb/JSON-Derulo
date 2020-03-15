@@ -7,6 +7,7 @@ from template.queCC import QueCC
 import pdb
 import threading
 from random import choice, randint, sample, seed
+import multiprocessing
 
 db = Database()
 db.open('/home/pkhorsand/165a-winter-2020-private/db')
@@ -30,6 +31,7 @@ for i in range(0, 10000):
 transaction_workers = []
 for i in range(num_threads):
     transaction_workers.append(TransactionWorker(grades_table, i, quecc , []))
+    #print(transaction_workers[i].result)
 
 # generates 10k random transactions
 # each transaction will increment the first column of a record 5 times
@@ -43,18 +45,21 @@ for i in range(1000):
         q = Query(grades_table)
         transaction.add_query(q.increment, key, 1)
     transaction_workers[i % num_threads].add_transaction(transaction)
-# print("num transactions for worker1: ", len(transaction_workers[0].transactions))
 threads = []
 for transaction_worker in transaction_workers:
-    threads.append(threading.Thread(target = transaction_worker.run, args = ()))
+    threads.append(multiprocessing.Process(target = transaction_worker.run, args = ()))
+    # threads.append(threading.Thread(target = transaction_worker.run, args = ()))
 
 for i, thread in enumerate(threads):
     print('Thread', i, 'started')
     thread.start()
 
+
 for i, thread in enumerate(threads):
     thread.join()
     print('Thread', i, 'finished')
+
+# print("num transactions for worker1: ", transaction_workers[0].result)
 
 num_committed_transactions = sum(t.result for t in transaction_workers)
 print(num_committed_transactions, 'transaction committed.')
