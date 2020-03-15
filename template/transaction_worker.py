@@ -46,19 +46,14 @@ class TransactionWorker:
             self.stats.append(True)
             # sort queries in each transaction into respective queues
             for query in transaction.queries:
-                # print("query: ", query)
                 # sort queries into the 16 queues
                 self.sortIntoQueue(query)
         # execute priority queues
         while (self.queuesExecuted != 4):
             queueToExecute = self.quecc.setsOfQueues[self.queuesExecuted][self.transactionWorkerNum]
-            # print("GOT HERE 1")
             while not (queueToExecute.empty()):
-                # print("GOT HERE 2")
                 query, args = queueToExecute.get()
-                # print("query: ", query, " args: ", args)
                 query(*args)
-
             self.queuesExecuted += 1
 
 

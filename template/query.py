@@ -232,7 +232,7 @@ class Query:
     def getLatestRecord(self, indirection, record, baseRID):
         currentTID = indirection
         TIDRecord = []
-        time.sleep(0.000001)
+        # time.sleep(0.000001)
         # print("TIDRECORD in getLatestRecord(): ", currentTID)
         self.addToTIDRecordArray(TIDRecord, currentTID)
         # print("baseRID1: ", baseRID)
@@ -473,7 +473,5 @@ class Query:
             updated_columns = [None] * self.table.num_columns
             updated_columns[column] = r.columns[column] + 1
             u = self.update(key, *updated_columns)
-            r = self.select(key, self.table.key, [1] * self.table.num_columns)[0]
-            # print("after increment: ", r.columns)
             return u
         return False
