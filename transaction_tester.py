@@ -4,6 +4,7 @@ from template.transaction import Transaction
 from template.transaction_worker import TransactionWorker
 from template.queCC import QueCC
 
+import pdb
 import threading
 from random import choice, randint, sample, seed
 
@@ -38,7 +39,7 @@ for i in range(1000):
     for j in range(5):
         key = keys[k * 5 + j]
         q = Query(grades_table)
-        # transaction.add_query(q.select, key, 0, [1, 1, 1, 1, 1])
+        transaction.add_query(q.select, key, 0, [1, 1, 1, 1, 1])
         q = Query(grades_table)
         transaction.add_query(q.increment, key, 1)
     transaction_workers[i % num_threads].add_transaction(transaction)
@@ -58,10 +59,10 @@ for i, thread in enumerate(threads):
 num_committed_transactions = sum(t.result for t in transaction_workers)
 print(num_committed_transactions, 'transaction committed.')
 
-# query = Query(grades_table)
-# s = query.sum(keys[0], keys[-1], 1)
-# # print("keys[0]: ", keys[0], " keys[-1]: ",keys[-1])
-# if s != num_committed_transactions * 5:
-#     print('Expected sum:', num_committed_transactions * 5, ', actual:', s, '. Failed.')
-# else:
-#     print('Pass. sum: ', num_committed_transactions * 5)
+query = Query(grades_table)
+s = query.sum(keys[0], keys[-1], 1)
+# print("keys[0]: ", keys[0], " keys[-1]: ",keys[-1])
+if s != num_committed_transactions * 5:
+    print('Expected sum:', num_committed_transactions * 5, ', actual:', s, '. Failed.')
+else:
+    print('Pass. sum: ', num_committed_transactions * 5)

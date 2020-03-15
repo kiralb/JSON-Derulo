@@ -210,6 +210,7 @@ class Query:
         # print(" ")
         # print("currentTID: ", currentTID)
         # print("currentRID: ", self.table.RIDCounter)
+        self.lock.acquire()
         firstIndex = self.table.page_directory2[currentTID][0]
         secondIndex = self.table.page_directory2[currentTID][1]
         fourthIndex = self.table.page_directory2[currentTID][3]
@@ -224,6 +225,7 @@ class Query:
                 tempbytearray[j] = physicalPage.data[fourthIndex + j]
                 j = j + 1
             TIDRecord.append(int.from_bytes(tempbytearray, byteorder = 'big'))
+        self.lock.release()
 
 
 
@@ -238,7 +240,10 @@ class Query:
         # print("baseRID1: ", baseRID)
         schemaIndexSet = "" # used later to check if schema index is in string
 
-        while (self.getTIDIndirection(currentTID) != baseRID):
+
+        tempCurrentTID = self.getTIDIndirection(currentTID)
+        while (tempCurrentTID != baseRID):
+            # print("currentTID: ", currentTID)
             TIDSchema = self.getTIDsSchema(currentTID)
             schema = self.putZerosInTheFront(TIDSchema)
 #            print("TIDRecord: ", TIDRecord," schema: ", schema)
@@ -247,12 +252,11 @@ class Query:
                     if (str(i) not in schemaIndexSet):
                         schemaIndexSet += str(i)
                         record[i] = TIDRecord[i]
-
             currentTID = self.getTIDIndirection(currentTID)
-
             TIDRecord = []
             self.addToTIDRecordArray(TIDRecord, currentTID)
-            # print("baseRID2: ", baseRID)
+            tempCurrentTID = self.getTIDIndirection(currentTID)
+
         TIDSchema = self.getTIDsSchema(currentTID)
         schema = self.putZerosInTheFront(TIDSchema)
         for i in range(len(schema)):
@@ -260,7 +264,6 @@ class Query:
                 if (str(i) not in schemaIndexSet):
                     schemaIndexSet += str(i)
                     record[i] = TIDRecord[i]
-
 #        print("TID Record: ", TIDRecord)
 #        print("record final: ", record)
 
@@ -300,7 +303,6 @@ class Query:
 
             recordObj = Record(baseRecordsRID, key, queryRecord)
             listOfRecordObjects.append(recordObj)
-
         # print("listOfRecordObjects: ", listOfRecordObjects[0].columns)
         return listOfRecordObjects
 
