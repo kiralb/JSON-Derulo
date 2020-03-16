@@ -50,6 +50,7 @@ class Table:
         self.keyToRID = {}
         self.keyToTID = {}
         self.TIDCounterPin = 0
+        self.selectPin = 0
         """ START Milestone2 Stuff """
         self.index = Index(self)
         # holds an index object for each column in base pages

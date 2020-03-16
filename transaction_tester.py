@@ -35,7 +35,7 @@ for i in range(num_threads):
 
 # generates 10k random transactions
 # each transaction will increment the first column of a record 5 times
-for i in range(10000):
+for i in range(1000):
     k = randint(0, 2000 - 1)
     transaction = Transaction()
     for j in range(5):

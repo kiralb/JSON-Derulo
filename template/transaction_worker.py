@@ -23,19 +23,14 @@ class TransactionWorker:
     def add_transaction(self, t):
         self.transactions.append(t)
         self.result = self.result + 1
-        #print("we have added one to result: ", self.result)
 
 
     def sortIntoQueue(self, query):
         key = query[1][0]
-        # print("key: ", key)
         RID = self.table.keyToRID[key]
-        # print("RID: ", RID)
         column = RID // 2501
         row = self.transactionWorkerNum
-        # print("query: ", query[0] ," RID: ", RID, "row: ", self.transactionWorkerNum, " column: ", column )
         self.quecc.setsOfQueues[row][column].put(query)
-        # print("inserting: ", self.quecc.setsOfQueues[row][column])
 
 
 

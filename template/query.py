@@ -50,13 +50,11 @@ class Query:
         arrayOfIndices.append(secondIndex)
         arrayOfIndices.append(thirdIndex)
         arrayOfIndices.append(fourthIndex)
-#        print(arrayOfIndices)
         self.table.page_directory[self.table.RIDCounter] = arrayOfIndices
 
 
     def mapTIDToIndices(self):
         arrayOfIndices = []
-#        print(self.table.TIDCounter)
         firstIndex = ( (2**31)- self.table.TIDCounter - 1)  // 2048
         secondIndex = 0
         temp2 = ( ((2**31)- self.table.TIDCounter - 1)) - firstIndex * 2048
@@ -72,7 +70,6 @@ class Query:
         arrayOfIndices.append(secondIndex)
         arrayOfIndices.append(thirdIndex)
         arrayOfIndices.append(fourthIndex)
-#        print(arrayOfIndices)
         self.table.page_directory2[self.table.TIDCounter] = arrayOfIndices
 
 
@@ -142,7 +139,6 @@ class Query:
 
         # incrementing so we're not mapping to the same RID
         self.table.RIDCounter = self.table.RIDCounter + 1
-        # self.lock.release()
         pass
 
     def addToRecordArray(self, key, record, rid):
@@ -162,7 +158,6 @@ class Query:
             record.append(attributeToAdd)
 
     def getTIDIndirection(self, currentTID):
-        # self.lock.acquire()
         firstIndex = self.table.page_directory2[currentTID][0]
         secondIndex = self.table.page_directory2[currentTID][1]
         thirdIndex = 0
@@ -175,7 +170,6 @@ class Query:
             tempbytearray[j] = TIDIndirectionPage.data[fourthIndex + j]
             j = j + 1
        # print((int).from_bytes(tempbytearray, byteorder = 'big'))
-        # self.lock.release()
         return (int).from_bytes(tempbytearray, byteorder = 'big')
 
 
@@ -209,7 +203,6 @@ class Query:
         # if (currentTID not in self.table.page_directory2) :
         #     print("this TID not found: ", currentTID)
         # print(" ")
-        # print("currentRID: ", self.table.RIDCounter)
         firstIndex = self.table.page_directory2[currentTID][0]
         secondIndex = self.table.page_directory2[currentTID][1]
         fourthIndex = self.table.page_directory2[currentTID][3]
@@ -232,25 +225,19 @@ class Query:
     def getLatestRecord(self, indirection, record, baseRID):
         currentTID = indirection
         TIDRecord = []
-        # print("TIDRECORD in getLatestRecord(): ", currentTID)
         self.addToTIDRecordArray(TIDRecord, currentTID)
-        # print("baseRID1: ", baseRID)
         schemaIndexSet = "" # used later to check if schema index is in string
         while (self.getTIDIndirection(currentTID) != baseRID):
             TIDSchema = self.getTIDsSchema(currentTID)
             schema = self.putZerosInTheFront(TIDSchema)
-#            print("TIDRecord: ", TIDRecord," schema: ", schema)
             for i in range(len(schema)):
                 if (schema[i] == "1"):
                     if (str(i) not in schemaIndexSet):
                         schemaIndexSet += str(i)
                         record[i] = TIDRecord[i]
-            # print("currentTID1: ", currentTID)
             currentTID = self.getTIDIndirection(currentTID)
-            # print("currentTID2: ", currentTID)
             TIDRecord = []
             self.addToTIDRecordArray(TIDRecord, currentTID)
-            # print("baseRID2: ", baseRID)
         TIDSchema = self.getTIDsSchema(currentTID)
         schema = self.putZerosInTheFront(TIDSchema)
         for i in range(len(schema)):
@@ -258,9 +245,6 @@ class Query:
                 if (str(i) not in schemaIndexSet):
                     schemaIndexSet += str(i)
                     record[i] = TIDRecord[i]
-
-#        print("TID Record: ", TIDRecord)
-#        print("record final: ", record)
 
 
 
@@ -272,7 +256,9 @@ class Query:
     """
 
     def select(self, key, column, query_columns):
-        # self.lock.acquire()
+        while (self.table.selectPin != 0):
+            continue
+        self.table.selectPin = 1
         listOfRecordObjects = []
         if (key not in self.table.listOfIndexObj[column].keyToRIDList):
             return listOfRecordObjects
@@ -299,8 +285,8 @@ class Query:
 
             recordObj = Record(baseRecordsRID, key, queryRecord)
             listOfRecordObjects.append(recordObj)
-        # print("listOfRecordObjects: ", listOfRecordObjects[0].columns)
-        # self.lock.release()
+
+        self.table.selectPin = 0
         return listOfRecordObjects
 
 
@@ -421,12 +407,10 @@ class Query:
             if (columns[i] != None):
                 attribute = columns[i]
                 thirdIndex = i + 4
-#                print("Tid: ", TIDCounter, " firstIndex: ", firstIndex, " secondINdex: ", secondIndex, " thirdIndex: ", thirdIndex, " fourthIndex: ", fourthIndex)
                 physicalPageToAdd = self.table.pageRangeArray2[firstIndex][secondIndex][thirdIndex]
                 self.addToByteArray(physicalPageToAdd, fourthIndex, attribute)
 
         self.table.TIDCounter -= 1
-        # self.lock.release()
         self.table.TIDCounterPin = 0
 
         pass
@@ -442,10 +426,8 @@ class Query:
 
         for i in range(start_range, end_range + 1):
     	    columnToAdd = self.select(i, 0, [1, 1, 1, 1, 1])
-            # print("columnToAdd: ", columnToAdd)
     	    if (len(columnToAdd) != 0):
     		    summation += columnToAdd[0].columns[aggregate_column_index]
-    		# summation += columnToAdd
 
         return summation
 
@@ -462,15 +444,11 @@ class Query:
     # Returns False if no record matches key or if target record is locked by 2PL.
     """
     def increment(self, key, column):
-        # self.lock.acquire()
         r = self.select(key, self.table.key, [1] * self.table.num_columns)[0]
-        # self.lock.release()
-        # print("incrementing: ", key)
+
         if r is not False:
             updated_columns = [None] * self.table.num_columns
             updated_columns[column] = r.columns[column] + 1
             u = self.update(key, *updated_columns)
-            # r = self.select(key, self.table.key, [1] * self.table.num_columns)[0]
-            # print("after increment: ", r.columns)
             return u
         return False
