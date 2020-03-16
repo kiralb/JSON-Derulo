@@ -142,6 +142,7 @@ class Query:
 
         # incrementing so we're not mapping to the same RID
         self.table.RIDCounter = self.table.RIDCounter + 1
+        # self.lock.release()
         pass
 
     def addToRecordArray(self, key, record, rid):
@@ -231,7 +232,6 @@ class Query:
     def getLatestRecord(self, indirection, record, baseRID):
         currentTID = indirection
         TIDRecord = []
-        # time.sleep(0.0000001)
         # print("TIDRECORD in getLatestRecord(): ", currentTID)
         self.addToTIDRecordArray(TIDRecord, currentTID)
         # print("baseRID1: ", baseRID)
@@ -272,6 +272,7 @@ class Query:
     """
 
     def select(self, key, column, query_columns):
+        # self.lock.acquire()
         listOfRecordObjects = []
         if (key not in self.table.listOfIndexObj[column].keyToRIDList):
             return listOfRecordObjects
@@ -299,6 +300,7 @@ class Query:
             recordObj = Record(baseRecordsRID, key, queryRecord)
             listOfRecordObjects.append(recordObj)
         # print("listOfRecordObjects: ", listOfRecordObjects[0].columns)
+        # self.lock.release()
         return listOfRecordObjects
 
 
@@ -359,8 +361,10 @@ class Query:
     """
 
     def update(self, key, *columns): # 913151525, [None, 69 , None, None, None]
+
         while (self.table.TIDCounterPin != 0):
             continue
+        # self.lock.acquire()
         self.table.TIDCounterPin = 1
         TIDCounter = self.table.TIDCounter
         self.mapTIDToIndices()
@@ -422,6 +426,7 @@ class Query:
                 self.addToByteArray(physicalPageToAdd, fourthIndex, attribute)
 
         self.table.TIDCounter -= 1
+        # self.lock.release()
         self.table.TIDCounterPin = 0
 
         pass
@@ -442,8 +447,6 @@ class Query:
     		    summation += columnToAdd[0].columns[aggregate_column_index]
     		# summation += columnToAdd
 
-
-
         return summation
 
 
@@ -459,7 +462,9 @@ class Query:
     # Returns False if no record matches key or if target record is locked by 2PL.
     """
     def increment(self, key, column):
+        # self.lock.acquire()
         r = self.select(key, self.table.key, [1] * self.table.num_columns)[0]
+        # self.lock.release()
         # print("incrementing: ", key)
         if r is not False:
             updated_columns = [None] * self.table.num_columns

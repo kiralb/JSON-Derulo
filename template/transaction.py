@@ -1,5 +1,6 @@
 from template.table import Table, Record
 from template.index import Index
+import threading
 # from template.quecc import QueCC
 
 class Transaction:
@@ -9,6 +10,7 @@ class Transaction:
     """
     def __init__(self):
         self.queries = []
+        self.lock = threading.Lock()
         pass
 
     """
@@ -25,7 +27,9 @@ class Transaction:
     # If you choose to implement this differently this method must still return True if transaction commits or False on abort
     def run(self):
         for query, args in self.queries:
+            # self.lock.acquire()
             result = query(*args)
+            # self.lock.release()
             if result == False:
                 return False
             # print("result: ", result)
