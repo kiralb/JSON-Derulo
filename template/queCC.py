@@ -11,6 +11,7 @@ class QueCC:
 
     def __init__(self):
         self.setsOfQueues = [] # holds 16 queues
+        self.plannerThreadsRun = 0
         for _ in range(4):
             listOfQueues = []
             for _ in range(4):

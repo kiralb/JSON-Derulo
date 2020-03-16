@@ -210,7 +210,6 @@ class Query:
         # print(" ")
         # print("currentTID: ", currentTID)
         # print("currentRID: ", self.table.RIDCounter)
-        self.lock.acquire()
         firstIndex = self.table.page_directory2[currentTID][0]
         secondIndex = self.table.page_directory2[currentTID][1]
         fourthIndex = self.table.page_directory2[currentTID][3]
@@ -225,7 +224,6 @@ class Query:
                 tempbytearray[j] = physicalPage.data[fourthIndex + j]
                 j = j + 1
             TIDRecord.append(int.from_bytes(tempbytearray, byteorder = 'big'))
-        self.lock.release()
 
 
 
@@ -234,16 +232,13 @@ class Query:
     def getLatestRecord(self, indirection, record, baseRID):
         currentTID = indirection
         TIDRecord = []
-        # time.sleep(0.000001)
+        # time.sleep(0.0000001)
         # print("TIDRECORD in getLatestRecord(): ", currentTID)
         self.addToTIDRecordArray(TIDRecord, currentTID)
         # print("baseRID1: ", baseRID)
         schemaIndexSet = "" # used later to check if schema index is in string
 
-
-        tempCurrentTID = self.getTIDIndirection(currentTID)
-        while (tempCurrentTID != baseRID):
-            # print("currentTID: ", currentTID)
+        while (self.getTIDIndirection(currentTID) != baseRID):
             TIDSchema = self.getTIDsSchema(currentTID)
             schema = self.putZerosInTheFront(TIDSchema)
 #            print("TIDRecord: ", TIDRecord," schema: ", schema)
@@ -252,11 +247,11 @@ class Query:
                     if (str(i) not in schemaIndexSet):
                         schemaIndexSet += str(i)
                         record[i] = TIDRecord[i]
+
             currentTID = self.getTIDIndirection(currentTID)
             TIDRecord = []
             self.addToTIDRecordArray(TIDRecord, currentTID)
-            tempCurrentTID = self.getTIDIndirection(currentTID)
-
+            # print("baseRID2: ", baseRID)
         TIDSchema = self.getTIDsSchema(currentTID)
         schema = self.putZerosInTheFront(TIDSchema)
         for i in range(len(schema)):
@@ -264,6 +259,7 @@ class Query:
                 if (str(i) not in schemaIndexSet):
                     schemaIndexSet += str(i)
                     record[i] = TIDRecord[i]
+
 #        print("TID Record: ", TIDRecord)
 #        print("record final: ", record)
 
@@ -303,6 +299,7 @@ class Query:
 
             recordObj = Record(baseRecordsRID, key, queryRecord)
             listOfRecordObjects.append(recordObj)
+
         # print("listOfRecordObjects: ", listOfRecordObjects[0].columns)
         return listOfRecordObjects
 
@@ -431,8 +428,9 @@ class Query:
 
 
 
-
+        self.lock.acquire()
         self.table.TIDCounter -= 1
+        self.lock.release()
 
         pass
 
@@ -444,9 +442,9 @@ class Query:
 
     def sum(self, start_range, end_range, aggregate_column_index):
         summation = 0
+
         for i in range(start_range, end_range + 1):
     	    columnToAdd = self.select(i, 0, [1, 1, 1, 1, 1])
-            print("columnToAdd: ", columnToAdd[0].columns)
             # print("columnToAdd: ", columnToAdd)
     	    if (len(columnToAdd) != 0):
     		    summation += columnToAdd[0].columns[aggregate_column_index]
@@ -470,13 +468,12 @@ class Query:
     """
     def increment(self, key, column):
         r = self.select(key, self.table.key, [1] * self.table.num_columns)[0]
-        print("before increment: ", r.columns)
+        # print("incrementing: ", key)
         if r is not False:
             updated_columns = [None] * self.table.num_columns
             updated_columns[column] = r.columns[column] + 1
             u = self.update(key, *updated_columns)
-            x = self.select(key, self.table.key, [1] * self.table.num_columns)[0]
-            print("after increment: ", x.columns)
-            print("\n")
+            r = self.select(key, self.table.key, [1] * self.table.num_columns)[0]
+            # print("after increment: ", r.columns)
             return u
         return False
