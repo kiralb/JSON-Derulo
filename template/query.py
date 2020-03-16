@@ -208,7 +208,6 @@ class Query:
         # if (currentTID not in self.table.page_directory2) :
         #     print("this TID not found: ", currentTID)
         # print(" ")
-        # print("currentTID: ", currentTID)
         # print("currentRID: ", self.table.RIDCounter)
         firstIndex = self.table.page_directory2[currentTID][0]
         secondIndex = self.table.page_directory2[currentTID][1]
@@ -237,7 +236,6 @@ class Query:
         self.addToTIDRecordArray(TIDRecord, currentTID)
         # print("baseRID1: ", baseRID)
         schemaIndexSet = "" # used later to check if schema index is in string
-
         while (self.getTIDIndirection(currentTID) != baseRID):
             TIDSchema = self.getTIDsSchema(currentTID)
             schema = self.putZerosInTheFront(TIDSchema)
@@ -247,8 +245,9 @@ class Query:
                     if (str(i) not in schemaIndexSet):
                         schemaIndexSet += str(i)
                         record[i] = TIDRecord[i]
-
+            # print("currentTID1: ", currentTID)
             currentTID = self.getTIDIndirection(currentTID)
+            # print("currentTID2: ", currentTID)
             TIDRecord = []
             self.addToTIDRecordArray(TIDRecord, currentTID)
             # print("baseRID2: ", baseRID)
@@ -287,7 +286,7 @@ class Query:
             self.addToRecordArray(key, record, RID)
 
             baseRecordsIndirection = self.getIndirectionFromBaseRecord(RID)
-
+            # print("baseRecordsIndirection: ")
             if (baseRecordsIndirection != 0):
                 self.getLatestRecord(baseRecordsIndirection, record, baseRecordsRID)
 
@@ -299,7 +298,6 @@ class Query:
 
             recordObj = Record(baseRecordsRID, key, queryRecord)
             listOfRecordObjects.append(recordObj)
-
         # print("listOfRecordObjects: ", listOfRecordObjects[0].columns)
         return listOfRecordObjects
 
@@ -361,6 +359,9 @@ class Query:
     """
 
     def update(self, key, *columns): # 913151525, [None, 69 , None, None, None]
+        while (self.table.TIDCounterPin != 0):
+            continue
+        self.table.TIDCounterPin = 1
         TIDCounter = self.table.TIDCounter
         self.mapTIDToIndices()
         self.table.keyToTID[key] = TIDCounter
@@ -369,12 +370,12 @@ class Query:
         firstIndex = self.table.page_directory2[TIDCounter][0]
         secondIndex = self.table.page_directory2[TIDCounter][1]
         fourthIndex = self.table.page_directory2[TIDCounter][3]
+
         TIDPage = 1
         if (self.addNewPageRange(secondIndex, fourthIndex)):
             self.table.addPageRange(self.table.pageRangeArray2)
         TIDPhysicalPage = self.table.pageRangeArray2[firstIndex][secondIndex][TIDPage]
         self.addToByteArray(TIDPhysicalPage, fourthIndex, TIDCounter)
-
         schemaPage = 3
         TIDSchemaPage = self.table.pageRangeArray2[firstIndex][secondIndex][schemaPage]
         schemaString = ""
@@ -411,11 +412,6 @@ class Query:
 #        print(baseRecordsIndirectionPage.data)
         self.reassignBaseRecordIndirection(baseRecordsIndirectionPage, TIDCounter, baseRecordsRID)
 
-        #TODO: UPDATE BASE RECORD'S SCHEMA ENCODING
-
-
-
-
 
         for i in range(numColumns - 4):
             if (columns[i] != None):
@@ -425,12 +421,8 @@ class Query:
                 physicalPageToAdd = self.table.pageRangeArray2[firstIndex][secondIndex][thirdIndex]
                 self.addToByteArray(physicalPageToAdd, fourthIndex, attribute)
 
-
-
-
-        self.lock.acquire()
         self.table.TIDCounter -= 1
-        self.lock.release()
+        self.table.TIDCounterPin = 0
 
         pass
 
@@ -473,7 +465,7 @@ class Query:
             updated_columns = [None] * self.table.num_columns
             updated_columns[column] = r.columns[column] + 1
             u = self.update(key, *updated_columns)
-            r = self.select(key, self.table.key, [1] * self.table.num_columns)[0]
+            # r = self.select(key, self.table.key, [1] * self.table.num_columns)[0]
             # print("after increment: ", r.columns)
             return u
         return False

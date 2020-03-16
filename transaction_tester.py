@@ -26,7 +26,7 @@ for i in range(0, 10000):
     records[key] = [key, 0, 0, 0, 0]
     q = Query(grades_table)
     q.insert(*records[key])
-
+    # print("keyToRID: ", q.table.keyToRID[key])
 # create TransactionWorkers
 transaction_workers = []
 for i in range(num_threads):

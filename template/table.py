@@ -49,7 +49,7 @@ class Table:
         # mapping our keys and RIDs
         self.keyToRID = {}
         self.keyToTID = {}
-
+        self.TIDCounterPin = 0
         """ START Milestone2 Stuff """
         self.index = Index(self)
         # holds an index object for each column in base pages
